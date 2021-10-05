@@ -42,13 +42,6 @@ AddStage("BaseInit", "Init",  save=Fields$group=="f" | Fields$group == "c" | Fie
 AddAction("Iteration", c("BaseIteration"))
 AddAction("Init", c("BaseInit"))
 
-if (Options$fields) {
-AddDensity(name="HZ_field", group="init", comment="initial h_z", parameter=TRUE)
-AddStage(name="InitFromFieldsStage", main="InitFromFields", load.densities=TRUE , save.
-fields=TRUE)
-AddAction(name="InitFromFields", "InitFromFieldsStage")
-}
-
 # Quantities - table of fields that can be exported from the LB lattice (like density, velocity etc)
 #  name - name of the field
 #  type - C type of the field, "real_t" - for single/double float, and "vector_t" for 3D vector single/double float
