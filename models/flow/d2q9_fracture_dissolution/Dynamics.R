@@ -91,7 +91,8 @@ AddSetting(name="Concentration", default=0, zonal=TRUE)
 AddSetting(name="omega_D", comment='Relaxation rate') 
 AddSetting(name="D", omega_D='1.0/(3*D+0.5)', default=0.16666666, comment='Diffusivity') 
 AddSetting(name="Inlet_concentration", default=0.0)
-
+AddSetting( name="C_saturation", default=1, comment='Concentration' )
+AddSetting( name="k",default=1, comment='Reaction speed coefficient' )
 
 #Node types for boundaries
 AddNodeType(name="EPressure", group="BOUNDARY")
@@ -110,3 +111,4 @@ AddNodeType(name="Outlet", group="OBJECTIVE")
 AddNodeType(name="Solid", group="BOUNDARY")
 AddNodeType(name="Wall", group="BOUNDARY")
 AddNodeType(name="MRT", group="COLLISION")
+AddNodeType(name="Reaction", group="SOURCE")

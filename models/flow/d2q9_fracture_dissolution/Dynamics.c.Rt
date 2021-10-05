@@ -174,7 +174,11 @@ CudaDeviceFunction void Run() {
     	CollisionMRT();
       ConcentrationCollisionBGK();
       break;
-  } 
+  }
+  if (NodeType & NODE_Reaction) {
+    ConcentrationSource();
+  }
+ 
 }
 
 CudaDeviceFunction void BounceBack()
@@ -302,3 +306,19 @@ CudaDeviceFunction void ConcentrationCollisionBGK() {
     c[i] = c[i] + omega_D * (c_eq[i]-c[i]);	
 	}
 }
+
+CudaDeviceFunction void ConcentrationSource() {
+  real_t C = getC();
+  real_t R = k * (C_saturation - C);
+
+  c[0] += R * 4./9.;
+  c[1] += R * 1./9;
+  c[2] += R * 1./9.;
+  c[3] += R * 1./9.;
+  c[4] += R * 1./9.;
+  c[5] += R * 1./36.;
+  c[6] += R * 1./36.;
+  c[7] += R * 1./36.;
+  c[8] += R * 1./36.;
+}
+
