@@ -13,9 +13,17 @@ AddDensity( name="f[6]", dx=-1, dy= 1, group="f")
 AddDensity( name="f[7]", dx=-1, dy=-1, group="f")
 AddDensity( name="f[8]", dx= 1, dy=-1, group="f")
 
+AddDensity( name="c[0]", dx= 0, dy= 0, group="c")
+AddDensity( name="c[1]", dx= 1, dy= 0, group="c")
+AddDensity( name="c[2]", dx= 0, dy= 1, group="c")
+AddDensity( name="c[3]", dx=-1, dy= 0, group="c")
+AddDensity( name="c[4]", dx= 0, dy=-1, group="c")
+AddDensity( name="c[5]", dx= 1, dy= 1, group="c")
+AddDensity( name="c[6]", dx=-1, dy= 1, group="c")
+AddDensity( name="c[7]", dx=-1, dy=-1, group="c")
+AddDensity( name="c[8]", dx= 1, dy=-1, group="c")
 
 AddDensity( name="h_Z", dx=0, dy=0, group="HZ", parameter=T)
-
 
 # THIS QUANTITIES ARE NEEDED FOR PYTHON INTEGRATION EXAMPLE
 # COMMENT OUT FOR PERFORMANCE
@@ -25,16 +33,14 @@ AddDensity( name="h_Z", dx=0, dy=0, group="HZ", parameter=T)
 #AddDensity( name="BC[0]", dx=0, dy=0, group="BC")
 #AddDensity( name="BC[1]", dx=0, dy=0, group="BC")
 
-
 AddStage("BaseIteration", "Run", 
-         load=DensityAll$group == "f" | DensityAll$group == "HZ",  
-         save=Fields$group=="f" | Fields$group=="HZ"
+         load=DensityAll$group == "f" | DensityAll$group == "c" | DensityAll$group == "HZ",  
+         save=Fields$group=="f" | Fields$group == "c" | Fields$group=="HZ" 
          ) 
-AddStage("BaseInit", "Init",  save=Fields$group=="f" | Fields$group == "HZ") 
+AddStage("BaseInit", "Init",  save=Fields$group=="f" | Fields$group == "c" | Fields$group == "HZ" ) 
 
 AddAction("Iteration", c("BaseIteration"))
 AddAction("Init", c("BaseInit"))
-
 
 # Quantities - table of fields that can be exported from the LB lattice (like density, velocity etc)
 #  name - name of the field
@@ -46,6 +52,7 @@ AddAction("Init", c("BaseInit"))
 AddQuantity(name="Rho",unit="kg/m3")
 AddQuantity(name="U",unit="m/s",vector=T)
 AddQuantity(name="H_Z")
+AddQuantity(name="C")
 
 # Settings - table of settings (constants) that are taken from a .xml file
 #  name - name of the constant variable
@@ -78,7 +85,13 @@ AddSetting(name="S2", default="0", comment='MRT Sx')
 AddSetting(name="S3", default="0", comment='MRT Sx')
 AddSetting(name="S4", default="0", comment='MRT Sx')
 
-AddSetting(name="nubuffer",default=0.01, comment='Viscosity in the buffer layer (cumulant)')
+AddSetting(name="nubuffer", default=0.01, comment='Viscosity in the buffer layer (cumulant)')
+
+AddSetting(name="Concentration", default=0, zonal=TRUE) 
+AddSetting(name="omega_D", comment='Relaxation rate') 
+AddSetting(name="D", omega_D='1.0/(3*D+0.5)', default=0.16666666, comment='Diffusivity') 
+AddSetting(name="Inlet_concentration", default=0.0)
+
 
 #Node types for boundaries
 AddNodeType(name="EPressure", group="BOUNDARY")
@@ -92,8 +105,6 @@ AddNodeType(name="EVelocity", group="BOUNDARY")
 AddNodeType(name="NSymmetry", group="BOUNDARY")
 AddNodeType(name="SSymmetry", group="BOUNDARY")
 
-
-AddNodeType(name="Cumulant", group="COLLISION")
 AddNodeType(name="Inlet", group="OBJECTIVE")
 AddNodeType(name="Outlet", group="OBJECTIVE")
 AddNodeType(name="Solid", group="BOUNDARY")
