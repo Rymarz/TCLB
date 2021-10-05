@@ -176,7 +176,7 @@ CudaDeviceFunction void Run() {
       break;
   }
   if (NodeType & NODE_Reaction) {
-    ConcentrationSource();
+    ConcentrationSourceAndEvolveHZ();
   }
  
 }
@@ -287,9 +287,10 @@ CudaDeviceFunction void CollisionMRT()
 
 CudaDeviceFunction void ConcentrationCollisionBGK() {
 	real_t C = getC();
+  real_t d = getRho();
 	vector_t u;
-	u.x =  f[8]-f[7]-f[6]+f[5]-f[3]+f[1];
-	u.y = -f[8]-f[7]+f[6]+f[5]-f[4]+f[2];
+	u.x =  (f[8]-f[7]-f[6]+f[5]-f[3]+f[1])/d;
+	u.y = (-f[8]-f[7]+f[6]+f[5]-f[4]+f[2])/d;
 
 	real_t c_eq[9];
   c_eq[0] = ( 2. + ( -u.y*u.y - u.x*u.x )*3. )*C*2./9.;
@@ -307,18 +308,19 @@ CudaDeviceFunction void ConcentrationCollisionBGK() {
 	}
 }
 
-CudaDeviceFunction void ConcentrationSource() {
+CudaDeviceFunction void ConcentrationSourceAndEvolveHZ() {
   real_t C = getC();
   real_t R = k * (C_saturation - C);
 
-  c[0] += R * 4./9.;
-  c[1] += R * 1./9;
-  c[2] += R * 1./9.;
-  c[3] += R * 1./9.;
-  c[4] += R * 1./9.;
-  c[5] += R * 1./36.;
-  c[6] += R * 1./36.;
-  c[7] += R * 1./36.;
-  c[8] += R * 1./36.;
-}
+  c[0] += 2 * R * 4./9.;
+  c[1] += 2 * R * 1./9;
+  c[2] += 2 * R * 1./9.;
+  c[3] += 2 * R * 1./9.;
+  c[4] += 2 * R * 1./9.;
+  c[5] += 2 * R * 1./36.;
+  c[6] += 2 * R * 1./36.;
+  c[7] += 2 * R * 1./36.;
+  c[8] += 2 * R * 1./36.;
 
+  h_Z += 2 * R / C_solid;
+}

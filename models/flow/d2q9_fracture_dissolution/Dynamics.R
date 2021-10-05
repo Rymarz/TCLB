@@ -42,6 +42,13 @@ AddStage("BaseInit", "Init",  save=Fields$group=="f" | Fields$group == "c" | Fie
 AddAction("Iteration", c("BaseIteration"))
 AddAction("Init", c("BaseInit"))
 
+if (Options$fields) {
+AddDensity(name="HZ_field", group="init", comment="initial h_z", parameter=TRUE)
+AddStage(name="InitFromFieldsStage", main="InitFromFields", load.densities=TRUE , save.
+fields=TRUE)
+AddAction(name="InitFromFields", "InitFromFieldsStage")
+}
+
 # Quantities - table of fields that can be exported from the LB lattice (like density, velocity etc)
 #  name - name of the field
 #  type - C type of the field, "real_t" - for single/double float, and "vector_t" for 3D vector single/double float
@@ -59,27 +66,18 @@ AddQuantity(name="C")
 #  comment - additional comment
 # You can state that another setting is 'derived' from this one stating for example: RelaxationRate='1.0/(3*Viscosity + 0.5)'
 
-AddSetting(
-           name="RelaxationRate", 
-           S2='1-RelaxationRate',       
-           comment='one over relaxation time'
-            )
+AddSetting(name="RelaxationRate", S2='1-RelaxationRate', comment='one over relaxation time')
 AddSetting(name="Viscosity", RelaxationRate='1.0/(3*Viscosity + 0.5)', default=0.16666666, comment='viscosity')
 AddSetting(name="VelocityX", default=0, comment='inlet/outlet/init velocity', zonal=T)
 AddSetting(name="VelocityY", default=0, comment='inlet/outlet/init velocity', zonal=T)
 AddSetting(name="Pressure", default=0, comment='inlet/outlet/init density', zonal=T)
 
-AddSetting(name="Height", default=1, comment='iinitial height in Z direction', zonal=T)
+AddSetting(name="Height", default=1, comment='initial height in Z direction', zonal=T)
 
 AddSetting(name="BrinkmanHeightInv", default=0, zonal=T)
 
 AddSetting(name="GravitationX")
 AddSetting(name="GravitationY")
-# Globals - table of global integrals that can be monitored and optimized
-
-AddGlobal(name="PressureLoss", comment='pressure loss', unit="1mPa")
-AddGlobal(name="OutletFlux", comment='pressure loss', unit="1m2/s")
-AddGlobal(name="InletFlux", comment='pressure loss', unit="1m2/s")
 
 AddSetting(name="S2", default="0", comment='MRT Sx')
 AddSetting(name="S3", default="0", comment='MRT Sx')
@@ -91,8 +89,14 @@ AddSetting(name="Concentration", default=0, zonal=TRUE)
 AddSetting(name="omega_D", comment='Relaxation rate') 
 AddSetting(name="D", omega_D='1.0/(3*D+0.5)', default=0.16666666, comment='Diffusivity') 
 AddSetting(name="Inlet_concentration", default=0.0)
-AddSetting( name="C_saturation", default=1, comment='Concentration' )
-AddSetting( name="k",default=1, comment='Reaction speed coefficient' )
+AddSetting( name="C_saturation", default=1, comment='Concentration')
+AddSetting( name="k",default=1, comment='Reaction speed coefficient')
+AddSetting( name="C_solid", default=100, comment='Solid concentration')
+
+# Globals - table of global integrals that can be monitored and optimized
+AddGlobal(name="PressureLoss", comment='pressure loss', unit="1mPa")
+AddGlobal(name="OutletFlux", comment='pressure loss', unit="1m2/s")
+AddGlobal(name="InletFlux", comment='pressure loss', unit="1m2/s")
 
 #Node types for boundaries
 AddNodeType(name="EPressure", group="BOUNDARY")
