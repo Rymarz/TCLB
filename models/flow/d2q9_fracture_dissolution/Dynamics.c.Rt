@@ -42,7 +42,7 @@ CudaDeviceFunction real_t getRho(){
 }
 
 CudaDeviceFunction real_t getH_Z(){
-	return h_Z ;
+	return h_Z;
 }   
 
 CudaDeviceFunction real_t getC(){
@@ -133,8 +133,10 @@ CudaDeviceFunction void Init() {
   c[6] = ( 1. + ( ( 1 + u.y )*u.y + ( -1 + u.x - u.y*3. )*u.x )*3. )*C/36.;
   c[7] = ( 1. + ( ( -1 + u.y )*u.y + ( -1 + u.x + u.y*3. )*u.x )*3. )*C/36.;
   c[8] = ( 1. + ( ( -1 + u.y )*u.y + ( 1 + u.x - u.y*3. )*u.x )*3. )*C/36.;
-    
-  h_Z = BrinkmanHeightInv;
+}
+
+CudaDeviceFunction void InitFromFields() {
+  h_Z = Height;
 }
 
 CudaDeviceFunction void Run() {

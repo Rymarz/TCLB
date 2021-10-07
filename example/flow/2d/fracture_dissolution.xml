@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/" permissive="true">
+  <Geometry nx="1024" ny="256">
+    <Reaction>
+      <Box />
+    </Reaction>
+    <MRT>
+      <Box />
+    </MRT>
+    <WVelocity name="Inlet">
+      <Inlet />
+    </WVelocity>
+    <EPressure name="Outlet">
+      <Outlet />
+    </EPressure>
+    <Inlet nx="1" dx="5">
+      <Box />
+    </Inlet>
+    <Outlet nx="1" dx="-5">
+      <Box />
+    </Outlet>
+  </Geometry>
+  <RunR>
+    library(png)
+    tab = readPNG("example/data/1024x256_initial_hz.png")
+    nx = dim(tab)[2]
+    ny = dim(tab)[1]
+    v = as.vector(tab[,,3])
+    x = round(as.vector(Solver$Geometry$X) - 0.5) %% nx
+    y = round(as.vector(Solver$Geometry$Y) - 0.5) %% ny
+		Solver$Fields$Height [] = v[(ny - 1 - y) + ny*x + 1]
+
+    Solver$Actions$InitFromFields()
+  </RunR>
+  <Model>
+    <Param name="VelocityX" value="0.1" />
+    <Param name="Viscosity" value="0.02" />
+    <Param name="D" value="0.01" />
+    <Param name="C_saturation" value="5.0" />
+    <Param name="Inlet_concentration" value="0.0" />
+    <Param name="k" value="0.0001" />
+  </Model>
+  <VTK Iterations="10" />
+  <Solve Iterations="100" />
+</CLBConfig>

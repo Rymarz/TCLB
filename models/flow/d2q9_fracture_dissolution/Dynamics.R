@@ -23,7 +23,7 @@ AddDensity( name="c[6]", dx=-1, dy= 1, group="c")
 AddDensity( name="c[7]", dx=-1, dy=-1, group="c")
 AddDensity( name="c[8]", dx= 1, dy=-1, group="c")
 
-AddDensity( name="h_Z", dx=0, dy=0, group="HZ", parameter=T)
+AddDensity( name="h_Z", dx=0, dy=0, group="HZ")
 
 # THIS QUANTITIES ARE NEEDED FOR PYTHON INTEGRATION EXAMPLE
 # COMMENT OUT FOR PERFORMANCE
@@ -33,11 +33,16 @@ AddDensity( name="h_Z", dx=0, dy=0, group="HZ", parameter=T)
 #AddDensity( name="BC[0]", dx=0, dy=0, group="BC")
 #AddDensity( name="BC[1]", dx=0, dy=0, group="BC")
 
+AddDensity(name="Height", group="init", parameter=TRUE)
+AddStage(name="InitFromFieldsStage", main="InitFromFields",  save=Fields$group=="f" | Fields$group == "c" | Fields$group == "HZ")
+AddAction(name="InitFromFields", c("InitFromFieldsStage"))
+
 AddStage("BaseIteration", "Run", 
          load=DensityAll$group == "f" | DensityAll$group == "c" | DensityAll$group == "HZ",  
          save=Fields$group=="f" | Fields$group == "c" | Fields$group=="HZ" 
          ) 
 AddStage("BaseInit", "Init",  save=Fields$group=="f" | Fields$group == "c" | Fields$group == "HZ" ) 
+AddStage("BaseInitFromFields", "InitFromFields",  save=Fields$group=="f" | Fields$group == "c" | Fields$group == "HZ" ) 
 
 AddAction("Iteration", c("BaseIteration"))
 AddAction("Init", c("BaseInit"))
@@ -51,8 +56,8 @@ AddAction("Init", c("BaseInit"))
 
 AddQuantity(name="Rho",unit="kg/m3")
 AddQuantity(name="U",unit="m/s",vector=T)
-AddQuantity(name="H_Z")
-AddQuantity(name="C")
+AddQuantity(name="H_Z", unit="m")
+AddQuantity(name="C", unit="1/m3")
 
 # Settings - table of settings (constants) that are taken from a .xml file
 #  name - name of the constant variable
@@ -64,8 +69,6 @@ AddSetting(name="Viscosity", RelaxationRate='1.0/(3*Viscosity + 0.5)', default=0
 AddSetting(name="VelocityX", default=0, comment='inlet/outlet/init velocity', zonal=T)
 AddSetting(name="VelocityY", default=0, comment='inlet/outlet/init velocity', zonal=T)
 AddSetting(name="Pressure", default=0, comment='inlet/outlet/init density', zonal=T)
-
-AddSetting(name="Height", default=1, comment='initial height in Z direction', zonal=T)
 
 AddSetting(name="BrinkmanHeightInv", default=0, zonal=T)
 
@@ -82,9 +85,9 @@ AddSetting(name="Concentration", default=0, zonal=TRUE)
 AddSetting(name="omega_D", comment='Relaxation rate') 
 AddSetting(name="D", omega_D='1.0/(3*D+0.5)', default=0.16666666, comment='Diffusivity') 
 AddSetting(name="Inlet_concentration", default=0.0)
-AddSetting( name="C_saturation", default=1, comment='Concentration')
-AddSetting( name="k",default=1, comment='Reaction speed coefficient')
-AddSetting( name="C_solid", default=100, comment='Solid concentration')
+AddSetting(name="C_saturation", default=1, comment='Concentration')
+AddSetting(name="k",default=1, comment='Reaction speed coefficient')
+AddSetting(name="C_solid", default=100, comment='Solid concentration')
 
 # Globals - table of global integrals that can be monitored and optimized
 AddGlobal(name="PressureLoss", comment='pressure loss', unit="1mPa")
