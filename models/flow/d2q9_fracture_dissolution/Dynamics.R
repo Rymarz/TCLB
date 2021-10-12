@@ -34,16 +34,11 @@ AddDensity( name="h_Z", dx=0, dy=0, group="HZ")
 #AddDensity( name="BC[1]", dx=0, dy=0, group="BC")
 
 AddDensity(name="Height", group="init", parameter=TRUE)
-AddStage(name="InitFromFieldsStage", main="InitFromFields",  save=Fields$group=="f" | Fields$group == "c" | Fields$group == "HZ")
-AddAction(name="InitFromFields", c("InitFromFieldsStage"))
+AddStage(name="InitFromFieldsStage", main="InitFromFields", load.densities=TRUE, save.fields=TRUE)
+AddAction(name="InitFromFields", "InitFromFieldsStage")
 
-AddStage("BaseIteration", "Run", 
-         load=DensityAll$group == "f" | DensityAll$group == "c" | DensityAll$group == "HZ",  
-         save=Fields$group=="f" | Fields$group == "c" | Fields$group=="HZ" 
-         ) 
-AddStage("BaseInit", "Init",  save=Fields$group=="f" | Fields$group == "c" | Fields$group == "HZ" ) 
-AddStage("BaseInitFromFields", "InitFromFields",  save=Fields$group=="f" | Fields$group == "c" | Fields$group == "HZ" ) 
-
+AddStage("BaseIteration", "Run", load.densities=TRUE, save.fields=TRUE) 
+AddStage("BaseInit", "Init", load.densities=TRUE, save.fields=TRUE ) 
 AddAction("Iteration", c("BaseIteration"))
 AddAction("Init", c("BaseInit"))
 
@@ -54,8 +49,8 @@ AddAction("Init", c("BaseInit"))
 # If one have filed [something] with type [type], one have to define a function: 
 # [type] get[something]() { return ...; }
 
-AddQuantity(name="Rho",unit="kg/m3")
-AddQuantity(name="U",unit="m/s",vector=T)
+AddQuantity(name="Rho", unit="kg/m3")
+AddQuantity(name="U", unit="m/s",vector=T)
 AddQuantity(name="H_Z", unit="m")
 AddQuantity(name="C", unit="1/m3")
 
@@ -69,8 +64,6 @@ AddSetting(name="Viscosity", RelaxationRate='1.0/(3*Viscosity + 0.5)', default=0
 AddSetting(name="VelocityX", default=0, comment='inlet/outlet/init velocity', zonal=T)
 AddSetting(name="VelocityY", default=0, comment='inlet/outlet/init velocity', zonal=T)
 AddSetting(name="Pressure", default=0, comment='inlet/outlet/init density', zonal=T)
-
-AddSetting(name="BrinkmanHeightInv", default=0, zonal=T)
 
 AddSetting(name="GravitationX")
 AddSetting(name="GravitationY")

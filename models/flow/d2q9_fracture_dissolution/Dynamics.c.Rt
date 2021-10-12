@@ -173,14 +173,11 @@ CudaDeviceFunction void Run() {
   switch (NodeType & NODE_COLLISION)
   {
     case NODE_MRT:
-    	CollisionMRT();
+      CollisionMRT();
       ConcentrationCollisionBGK();
+      ConcentrationSourceAndEvolveHZ();
       break;
   }
-  if (NodeType & NODE_Reaction) {
-    ConcentrationSourceAndEvolveHZ();
-  }
- 
 }
 
 CudaDeviceFunction void BounceBack()
@@ -212,8 +209,7 @@ CudaDeviceFunction void WVelocity()
 {
   <?R ZouHeRewrite(EQ, f, c(-1, 0), "velocity", BC_Velocity) ?>
   real_t C = 1.0;
-  #define inlet_C (Inlet_concentration)
-	C = 6.*( inlet_C - (c[0] + c[2] + c[4] + c[3] + c[7] + c[6]) );
+	C = 6.*( Inlet_concentration - (c[0] + c[2] + c[4] + c[3] + c[7] + c[6]) );
 	c[1] = (1./9.) * C;
 	c[5] = (1./36.) * C;
 	c[8] = (1./36.) * C;
