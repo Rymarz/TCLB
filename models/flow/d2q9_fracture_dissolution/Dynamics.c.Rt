@@ -66,7 +66,7 @@ CudaDeviceFunction vector_t getU(){
 
   real_t nu = -(S2 + 1)/(6*S2 - 6) ;
     
-  real_t K = d * 12. * nu * h_Z * h_Z;
+  real_t K = d * 12. * nu / h_Z / h_Z;
     
   u.x = (u.x)/(1. + 0.5 * K) / d;
   u.y = (u.y)/(1. + 0.5 * K) / d;   
@@ -133,9 +133,7 @@ CudaDeviceFunction void Init() {
   c[6] = ( 1. + ( ( 1 + u.y )*u.y + ( -1 + u.x - u.y*3. )*u.x )*3. )*C/36.;
   c[7] = ( 1. + ( ( -1 + u.y )*u.y + ( -1 + u.x + u.y*3. )*u.x )*3. )*C/36.;
   c[8] = ( 1. + ( ( -1 + u.y )*u.y + ( 1 + u.x - u.y*3. )*u.x )*3. )*C/36.;
-}
 
-CudaDeviceFunction void InitFromFields() {
   h_Z = Height;
 }
 
@@ -272,7 +270,7 @@ CudaDeviceFunction void CollisionMRT()
   real_t dJy =  GravitationY*rho ; 
 
   real_t nu = -(S2 + 1)/(6*S2 - 6) ;
-  real_t K = rho * 12. * nu * h_Z * h_Z;
+  real_t K = rho * 12. * nu / h_Z / h_Z;
     
   Jx = Jx + dJx - K*(Jx+dJx*0.5)/(1. + 0.5 * K) / rho;
   Jy = Jy + dJy - K*(Jy+dJy*0.5)/(1. + 0.5 * K) / rho;   

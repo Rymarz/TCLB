@@ -34,8 +34,6 @@ AddDensity( name="h_Z", dx=0, dy=0, group="HZ")
 #AddDensity( name="BC[1]", dx=0, dy=0, group="BC")
 
 AddDensity(name="Height", group="init", parameter=TRUE)
-AddStage(name="InitFromFieldsStage", main="InitFromFields", load.densities=TRUE, save.fields=TRUE)
-AddAction(name="InitFromFields", "InitFromFieldsStage")
 
 AddStage("BaseIteration", "Run", load.densities=TRUE, save.fields=TRUE) 
 AddStage("BaseInit", "Init", load.densities=TRUE, save.fields=TRUE ) 
