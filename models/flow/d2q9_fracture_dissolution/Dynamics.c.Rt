@@ -37,56 +37,6 @@
 
 #define pi 3.141592653589793116
 
-CudaDeviceFunction real_t getRho(){
-	return <?R C(sum(f)) ?>;
-}
-
-CudaDeviceFunction real_t getH_Z(){
-	return h_Z;
-}   
-
-CudaDeviceFunction real_t getC(){
-	return <?R C(sum(c)) ?>;
-}
-
-CudaDeviceFunction vector_t getU(){
-	real_t d = <?R C(sum(f)) ?>;
-	vector_t u;
-
-  <?R C(PV(c("u.x","u.y")), f %*% U) ?>
-
-  <?R if ( any( DensityAll$group=="BC" ) ) { ?>
-    if (!IamBOUNDARY) {   
-      u.x += d*BC[0]*0.5;
-      u.y += d*BC[1]*0.5;
-    }
-  <?R } ?>
-  u.x += d*GravitationX*0.5;
-  u.y += d*GravitationY*0.5;
-
-  real_t nu = -(S2 + 1)/(6*S2 - 6) ;
-    
-  real_t K = d * 12. * nu / h_Z / h_Z;
-    
-  u.x = (u.x)/(1. + 0.5 * K) / d;
-  u.y = (u.y)/(1. + 0.5 * K) / d;   
-
-	u.z = 0.0;
-	return u;
-}
-
-CudaDeviceFunction float2 Color() {
-  float2 ret;
-  vector_t u = getU();
-  ret.x = sqrt(u.x*u.x + u.y*u.y);
-  if (NodeType == NODE_Solid){
-    ret.y = 0;
-  } else {
-    ret.y = 1;
-  }
-  return ret;
-}
-
 CudaDeviceFunction void SetEquilibrum(real_t rho, real_t Jx, real_t Jy)
 {
   <?R
@@ -133,7 +83,9 @@ CudaDeviceFunction void Init() {
   c[6] = ( 1. + ( ( 1 + u.y )*u.y + ( -1 + u.x - u.y*3. )*u.x )*3. )*C/36.;
   c[7] = ( 1. + ( ( -1 + u.y )*u.y + ( -1 + u.x + u.y*3. )*u.x )*3. )*C/36.;
   c[8] = ( 1. + ( ( -1 + u.y )*u.y + ( 1 + u.x - u.y*3. )*u.x )*3. )*C/36.;
+}
 
+CudaDeviceFunction void InitFromFields() {
   h_Z = Height;
 }
 
@@ -319,4 +271,56 @@ CudaDeviceFunction void ConcentrationSourceAndEvolveHZ() {
   c[8] += 2 * R * 1./36.;
 
   h_Z += 2 * R / C_solid;
+}
+
+// Get functions
+
+CudaDeviceFunction real_t getRho(){
+	return <?R C(sum(f)) ?>;
+}
+
+CudaDeviceFunction real_t getC(){
+	return <?R C(sum(c)) ?>;
+}
+
+CudaDeviceFunction real_t getH_Z(){
+	return h_Z;
+}   
+
+CudaDeviceFunction vector_t getU(){
+	real_t d = <?R C(sum(f)) ?>;
+	vector_t u;
+
+  <?R C(PV(c("u.x","u.y")), f %*% U) ?>
+
+  <?R if ( any( DensityAll$group=="BC" ) ) { ?>
+    if (!IamBOUNDARY) {   
+      u.x += d*BC[0]*0.5;
+      u.y += d*BC[1]*0.5;
+    }
+  <?R } ?>
+  u.x += d*GravitationX*0.5;
+  u.y += d*GravitationY*0.5;
+
+  real_t nu = -(S2 + 1)/(6*S2 - 6) ;
+    
+  real_t K = d * 12. * nu / h_Z / h_Z;
+    
+  u.x = (u.x)/(1. + 0.5 * K) / d;
+  u.y = (u.y)/(1. + 0.5 * K) / d;   
+
+	u.z = 0.0;
+	return u;
+}
+
+CudaDeviceFunction float2 Color() {
+  float2 ret;
+  vector_t u = getU();
+  ret.x = sqrt(u.x*u.x + u.y*u.y);
+  if (NodeType == NODE_Solid){
+    ret.y = 0;
+  } else {
+    ret.y = 1;
+  }
+  return ret;
 }
