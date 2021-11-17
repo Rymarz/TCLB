@@ -60,7 +60,7 @@ CudaDeviceFunction void Init() {
   vector_t u;
 	u.x = VelocityX;
   u.y = VelocityY;
-  C = Concentration;
+  C = C_init;
   <?R if ( any( DensityAll$group=="BC" ) ) { ?>
     if (IamWall){
         rho = 1;
@@ -83,6 +83,8 @@ CudaDeviceFunction void Init() {
   c[6] = ( 1. + ( ( 1 + u.y )*u.y + ( -1 + u.x - u.y*3. )*u.x )*3. )*C/36.;
   c[7] = ( 1. + ( ( -1 + u.y )*u.y + ( -1 + u.x + u.y*3. )*u.x )*3. )*C/36.;
   c[8] = ( 1. + ( ( -1 + u.y )*u.y + ( 1 + u.x - u.y*3. )*u.x )*3. )*C/36.;
+
+  h_Z = 1.;
 }
 
 CudaDeviceFunction void InitFromFields() {
@@ -158,8 +160,7 @@ CudaDeviceFunction void WPressure()
 CudaDeviceFunction void WVelocity()
 {
   <?R ZouHeRewrite(EQ, f, c(-1, 0), "velocity", BC_Velocity) ?>
-  real_t C = 1.0;
-	C = 6.*( Inlet_concentration - (c[0] + c[2] + c[4] + c[3] + c[7] + c[6]) );
+  real_t C = 6.*( C_inlet - (c[0] + c[2] + c[4] + c[3] + c[7] + c[6]) );
 	c[1] = (1./9.) * C;
 	c[5] = (1./36.) * C;
 	c[8] = (1./36.) * C;
@@ -168,8 +169,7 @@ CudaDeviceFunction void WVelocity()
 CudaDeviceFunction void EPressure()
 {
   <?R ZouHeRewrite(EQ, f, c(1, 0), "pressure") ?>
-  real_t C = 1.0;
-  C = 6.*( c[1] + c[5] + c[8] );
+  real_t C = 6.*( C_outlet - ( c[0] + c[2] + c[4] + c[1] + c[5] + c[8] ) );
 	c[3] = (1./ 9.) * C;
 	c[7] = (1./36.) * C;
 	c[6] = (1./36.) * C;
@@ -258,19 +258,21 @@ CudaDeviceFunction void ConcentrationCollisionBGK() {
 
 CudaDeviceFunction void ConcentrationSourceAndEvolveHZ() {
   real_t C = getC();
-  real_t R = k * (C_saturation - C);
+  if(C <= C_saturation) {
+    real_t R = k * (C_saturation - C);
 
-  c[0] += 2 * R * 4./9.;
-  c[1] += 2 * R * 1./9;
-  c[2] += 2 * R * 1./9.;
-  c[3] += 2 * R * 1./9.;
-  c[4] += 2 * R * 1./9.;
-  c[5] += 2 * R * 1./36.;
-  c[6] += 2 * R * 1./36.;
-  c[7] += 2 * R * 1./36.;
-  c[8] += 2 * R * 1./36.;
+    c[0] += 2 * R * 4./9.;
+    c[1] += 2 * R * 1./9;
+    c[2] += 2 * R * 1./9.;
+    c[3] += 2 * R * 1./9.;
+    c[4] += 2 * R * 1./9.;
+    c[5] += 2 * R * 1./36.;
+    c[6] += 2 * R * 1./36.;
+    c[7] += 2 * R * 1./36.;
+    c[8] += 2 * R * 1./36.;
 
-  h_Z += 2 * R / C_solid;
+    h_Z += 2 * R / C_solid;
+  }
 }
 
 // Get functions

@@ -1,6 +1,9 @@
-<?xml version="1.0"?>
-<CLBConfig version="2.0" output="output/H_1" permissive="true">
-  <Geometry nx="1024" ny="256">
+<!-- <?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/" permissive="true">
+  <Geometry nx="1024" ny="512">
+    <Reaction>
+      <Box />
+    </Reaction>
     <MRT>
       <Box />
     </MRT>
@@ -10,34 +13,80 @@
     <EPressure name="Outlet">
       <Outlet />
     </EPressure>
-    <Inlet nx="1" dx="1">
+    <Inlet nx="1" dx="5">
       <Box />
     </Inlet>
-    <Outlet nx="1" dx="-1">
+    <Outlet nx="1" dx="-5">
       <Box />
     </Outlet>
   </Geometry>
   <RunR>
-    library(png)
-    tab = readPNG("example/data/1024_256_hz.png")
+    Solver$Fields$Height[] = rnorm(64*32, mean = 1, sd=0.001)
 
-	  Solver$Fields$Height[] = 1#t(10+2*tab[,,1])
+    Solver$Actions$InitFromFields()
+  </RunR>
+  <Model>
+    <Param name="VelocityX" value="0.1" />
+    <Param name="Viscosity" value="0.02" />
+    <Param name="D" value="0.01" />
+    <Param name="C_saturation" value="0.0" />
+    <Param name="C_inlet" value="0.0" />
+    <Param name="k" value="0.0001" />
+  </Model>
+  <HDF5 />
+  <Solve Iterations="1e6">
+    <HDF5 Iterations="1"/>
+  </Solve>
+</CLBConfig>  -->
 
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/" permissive="true">
+	<Units>
+		<Param name="size" value="0.01m" gauge="1"/>
+		<Param name="nu" value="1e-5m2/s" gauge="0.1666666666"/>
+	</Units>
+  <Geometry nx="20m" ny="10m">
+    <MRT>
+      <Box />
+    </MRT>
+    <WVelocity name="Inlet">
+      <Inlet />
+    </WVelocity>
+    <EPressure name="Outlet">
+      <Outlet />
+    </EPressure>
+    <Inlet nx="1" dx="5">
+      <Box />
+    </Inlet>
+    <Outlet nx="1" dx="-5">
+      <Box />
+    </Outlet>
+  </Geometry>
+  <RunR>
+   	Solver$Fields$Height[] = rnorm(100, mean = 0.02, sd=0.01)
+
+    Solver$Actions$InitFromFields()
     Solver$Actions$InitFromFields()
     Solver$Actions$InitFromFields()
 
     </RunR>
   <Model>
-    <Param name="VelocityX" value="0.0" />
-    <Param name="VelocityX" value="0.01" zone="Inlet" />
+    <Param name="VelocityX" value="0" />
+    <Param name="VelocityX" value="0.0001m/s" zone="Inlet" />
     <Param name="Pressure" value="0.0" />
-    <Param name="C_saturation" value="1.0" />
-    <Param name="Concentration" value="0.0" />
-    <Param name="Inlet_concentration" value="0.0" />
-    <Param name="k" value="1e-4" />
+    <Param name="C_saturation" value="2/m3" />
+    <Param name="C_init" value="0" />
+    <Param name="C_inlet" value="0.0" />
+    <Param name="C_outlet" value="2/m3" />
+    <Param name="D" value="1e-5m2/s" />
+    <Param name="k" value="1" /> 
+    <Param name="C_solid" value="2.7e4/m3" />
+
   </Model>
-  <VTK />
+  <HDF5 />
   <Solve Iterations="1e9">
-    <VTK Iterations="1e5"/>
+    <HDF5 Iterations="1e5"/>
   </Solve>
 </CLBConfig>
+
+

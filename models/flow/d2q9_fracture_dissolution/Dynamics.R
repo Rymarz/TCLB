@@ -19,7 +19,7 @@ AddDensity( name="c[6]", dx=-1, dy= 1, group="c")
 AddDensity( name="c[7]", dx=-1, dy=-1, group="c")
 AddDensity( name="c[8]", dx= 1, dy=-1, group="c")
 
-AddField( name="h_Z", dx=0, dy=0, group="HZ")
+AddDensity( name="h_Z", dx=0, dy=0, group="HZ")
 
 # Stages
 AddDensity(name="Height", group="init", parameter=TRUE)
@@ -50,11 +50,13 @@ AddSetting(name="S4", default="0", comment='MRT Sx')
 
 AddSetting(name="nubuffer", default=0.01, comment='Viscosity in the buffer layer (cumulant)')
 
-AddSetting(name="Concentration", default=0, zonal=TRUE) 
+AddSetting(name="C_init", default=0, zonal=TRUE) 
 AddSetting(name="omega_D", comment='Relaxation rate') 
 AddSetting(name="D", omega_D='1.0/(3*D+0.5)', default=0.16666666, comment='Diffusivity') 
-AddSetting(name="Inlet_concentration", default=0.0)
-AddSetting(name="C_saturation", default=1, comment='Concentration')
+AddSetting(name="C_inlet", default=0.0)
+AddSetting(name="C_outlet", default=0.0)
+AddSetting(name="C_saturation", C_outlet="C_saturation", default=1)
+
 AddSetting(name="k",default=1, comment='Reaction speed coefficient')
 AddSetting(name="C_solid", default=100, comment='Solid concentration')
 
