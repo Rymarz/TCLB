@@ -84,11 +84,11 @@ CudaDeviceFunction void Init() {
   c[7] = ( 1. + ( ( -1 + u.y )*u.y + ( -1 + u.x + u.y*3. )*u.x )*3. )*C/36.;
   c[8] = ( 1. + ( ( -1 + u.y )*u.y + ( 1 + u.x - u.y*3. )*u.x )*3. )*C/36.;
 
-  h_Z = 1.0;
+  h_Z = Height; 
 }
 
 CudaDeviceFunction void InitFromFields() {
-  h_Z = Height;
+  h_Z = Height_parameter;
 }
 
 CudaDeviceFunction void Run() {
@@ -258,7 +258,7 @@ CudaDeviceFunction void ConcentrationCollisionBGK() {
 
 CudaDeviceFunction void ConcentrationSourceAndEvolveHZ() {
   real_t C = getC();
-  if(C <= C_saturation) {
+  if(C < C_saturation) {
     real_t R = k * (C_saturation - C);
 
     c[0] += 2 * R * 4./9.;

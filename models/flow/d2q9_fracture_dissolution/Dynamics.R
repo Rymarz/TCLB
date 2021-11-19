@@ -22,7 +22,7 @@ AddDensity( name="c[8]", dx= 1, dy=-1, group="c")
 AddDensity( name="h_Z", dx=0, dy=0, group="HZ")
 
 # Stages
-AddDensity(name="Height", group="init", parameter=TRUE)
+AddDensity(name="Height_parameter", group="init", parameter=TRUE)
 AddStage(name="BaseIteration", main="Run", load.densities=TRUE, save.fields=TRUE) 
 AddStage(name="BaseInitFromFields", main="InitFromFields", load.densities=TRUE, save.fields=TRUE)
 AddAction(name="Iteration", "BaseIteration")
@@ -50,6 +50,7 @@ AddSetting(name="S4", default="0", comment='MRT Sx')
 
 AddSetting(name="nubuffer", default=0.01, comment='Viscosity in the buffer layer (cumulant)')
 
+AddSetting(name="Height", default=1, zonal=TRUE) 
 AddSetting(name="C_init", default=0, zonal=TRUE) 
 AddSetting(name="omega_D", comment='Relaxation rate') 
 AddSetting(name="D", omega_D='1.0/(3*D+0.5)', default=0.16666666, comment='Diffusivity') 
