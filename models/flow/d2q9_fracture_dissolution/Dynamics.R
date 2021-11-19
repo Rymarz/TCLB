@@ -56,7 +56,7 @@ AddSetting(name="omega_D", comment='Relaxation rate')
 AddSetting(name="D", omega_D='1.0/(3*D+0.5)', default=0.16666666, comment='Diffusivity') 
 AddSetting(name="C_inlet", default=0.0)
 AddSetting(name="C_outlet", default=0.0)
-AddSetting(name="C_saturation", C_outlet="C_saturation", default=1)
+AddSetting(name="C_saturation", default=1)
 
 AddSetting(name="k",default=1, comment='Reaction speed coefficient')
 AddSetting(name="C_solid", default=100, comment='Solid concentration')
