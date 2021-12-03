@@ -281,6 +281,10 @@ CudaDeviceFunction real_t getRho(){
 	return <?R C(sum(f)) ?>;
 }
 
+CudaDeviceFunction real_t getPressure(){
+	return ( <?R C(sum(f)) ?> - 1.)/3.;
+}
+
 CudaDeviceFunction real_t getC(){
 	return <?R C(sum(c)) ?>;
 }

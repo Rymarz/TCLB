@@ -30,6 +30,7 @@ AddAction(name="InitFromFields", "BaseInitFromFields")
 
 # Output quantieties
 AddQuantity(name="Rho", unit="kg/m3")
+AddQuantity(name="Pressure", unit="Pa")
 AddQuantity(name="U", unit="m/s",vector=T)
 AddQuantity(name="H_Z", unit="m")
 AddQuantity(name="C", unit="1/m3")
