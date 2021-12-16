@@ -5,84 +5,47 @@
 	source("lib/feq.R")
 	source("lib/boundary.R")
 
-	U = as.matrix(Density[Density$group=='f',c("dx","dy")])
-  u = PV(c("ux","uy"))
-  rho = PV("rho")
-	J = PV("J",c("x","y"))
+  U = as.matrix(Density[Density$group=='f',c("dx","dy")])
 
-	EQ = MRT_eq(U, ortogonal=FALSE)
-  wi = subst(EQ$Req, Jx=0, Jy=0, Jz=0)
+	fMRT = MRT_eq(U, ortogonal=FALSE)
+  wi = subst(fMRT$Req, Jx=0, Jy=0, Jz=0)
   wi = subst(wi, rho=1)
   wi = gapply(wi,function(x) x$.M, simplify=TRUE)
-  wi = wi %*% solve(EQ$mat)
+  wi = wi %*% solve(fMRT$mat)
 	wi = as.vector(wi)
 
-	W = solve(EQ$mat) %*% diag(1/wi) %*% solve(t(EQ$mat))
+	W = solve(fMRT$mat) %*% diag(1/wi) %*% solve(t(fMRT$mat))
 	i = rev(1:nrow(W))
 	H = chol(W[i,i])[i,i]
 	H = H * c(1,sqrt(3)/3,sqrt(3)/3,sqrt(2),sqrt(2),1,sqrt(6)/3,sqrt(6)/3,2)
-	B = EQ$mat %*% t(H)
+	B = fMRT$mat %*% t(H)
 
-	EQ = MRT_eq(U, rho, J, mat=B)
-	
-  f = PV(Density[Density$group=='f',"name"])
+	fMRT = MRT_eq(U, mat=B)
+
+	f = PV(Density[Density$group=='f',"name"])
+	rho = PV("rho")
+	J = PV("J",c("x","y"))
+
+  CU = as.matrix(Density[Density$group=='c',c("dx","dy")])
+    
   c = PV(Density[Density$group=='c',"name"])
+  C = PV("C")
+  JC = PV("JC",c("x","y"))
+  
+  cMRT = MRT_eq(CU, C, JC)
 
-  if ( any( DensityAll$group=="BC" ) ) {
-    BC_Velocity=PV(c('BC[0]', 'BC[1]'))
-  } else {
-    BC_Velocity=PV(c('VelocityX', 'VelocityY'))
-  }
+  BC_Velocity=PV(c('VelocityX', 'VelocityY'))
 ?>
 
-#define pi 3.141592653589793116
-
-CudaDeviceFunction void SetEquilibrum(real_t rho, real_t Jx, real_t Jy)
-{
-  <?R
-	feq = EQ$Req %*% solve(EQ$mat)
-	C(f, EQ$feq)
-  ?>
-  <?R if ( any( DensityAll$group=="BC" ) ) { ?>
-   if ( IamBOUNDARY ) {
-       BC[0] = Jx / rho;
-       BC[1] = Jy / rho;
-   } else {
-       BC[0] = 0;
-       BC[1] = 0;
-   }
-  <?R } ?>
-}
-
 CudaDeviceFunction void Init() {
-	real_t rho, C;
-  rho = (1+Pressure*3);
+	real_t rho = (1 + Pressure*3);
+  real_t C = C_init;
   vector_t u;
 	u.x = VelocityX;
   u.y = VelocityY;
-  C = C_init;
-  <?R if ( any( DensityAll$group=="BC" ) ) { ?>
-    if (IamWall){
-        rho = 1;
-        u.x = 0;
-        u.y = 0;
-    }
-  <?R } ?>
-	SetEquilibrum(
-		rho,
-    rho*u.x,
-    rho*u.y
-	);
 
-  c[0] = ( 2. + ( -u.y*u.y - u.x*u.x )*3. )*C*2./9.;
-  c[1] = ( 2. + ( -u.y*u.y + ( 1 + u.x )*u.x*2. )*3. )*C/18.;
-  c[2] = ( 2. + ( -u.x*u.x + ( 1 + u.y )*u.y*2. )*3. )*C/18.;
-  c[3] = ( 2. + ( -u.y*u.y + ( -1 + u.x )*u.x*2. )*3. )*C/18.;
-  c[4] = ( 2. + ( -u.x*u.x + ( -1 + u.y )*u.y*2. )*3. )*C/18.;
-  c[5] = ( 1. + ( ( 1 + u.y )*u.y + ( 1 + u.x + u.y*3. )*u.x )*3. )*C/36.;
-  c[6] = ( 1. + ( ( 1 + u.y )*u.y + ( -1 + u.x - u.y*3. )*u.x )*3. )*C/36.;
-  c[7] = ( 1. + ( ( -1 + u.y )*u.y + ( -1 + u.x + u.y*3. )*u.x )*3. )*C/36.;
-  c[8] = ( 1. + ( ( -1 + u.y )*u.y + ( 1 + u.x - u.y*3. )*u.x )*3. )*C/36.;
+	SetEquilibrum_f(rho, rho*u.x, rho*u.y);
+  SetEquilibrum_c(C, C*u.x, C*u.y);
 
   h_Z = Height; 
 }
@@ -103,11 +66,20 @@ CudaDeviceFunction void Run() {
     case NODE_WPressure:
       WPressure();
       break;
+    case NODE_WPressureWConcentration:
+      WPressureWConcentration();
+      break;
     case NODE_WVelocity:
       WVelocity();
       break;
+    case NODE_WVelocityWConcentration:
+      WVelocityWConcentration();
+      break;
     case NODE_EPressure:
       EPressure();
+      break;
+    case NODE_EPressureEConcentration:
+      EPressureEConcentration();
       break;
     case NODE_NVelocity:
       NVelocity();
@@ -126,98 +98,112 @@ CudaDeviceFunction void Run() {
   {
     case NODE_MRT:
       CollisionMRT();
-      ConcentrationCollisionBGK();
-      ConcentrationSourceAndEvolveHZ();
+      //CollisionBGK_c();
+      //Reaction();
       break;
   }
 }
 
+CudaDeviceFunction void SetEquilibrum_f(real_t rho, real_t Jx, real_t Jy)
+{
+<?R
+	C(f, fMRT$feq)
+?>
+}
+
+CudaDeviceFunction void SetEquilibrum_c(real_t C, real_t JCx, real_t JCy)
+{
+<?R
+  C(c, cMRT$feq)
+?>
+}
+
 CudaDeviceFunction void BounceBack()
 {
-    <?R if ( any( DensityAll$group=="BC" ) ) { ?>
-
-    <?R C(PV('real_t temp'), sum(f)) ?>
-
-    if ( temp !=  1+Pressure*3 ) {
-        <?R C(PV(c('BC[0]', 'BC[1]')), 2.* f %*% U); ?>
-    } else {
-        <?R C(PV(c('BC[0]', 'BC[1]')), c(0,0) ); ?>
-    }
-    <?R } ?>
-    <?R FullBounceBack() ?>
+<?R FullBounceBack() ?>
 }
 
 CudaDeviceFunction void EVelocity()
 {
-  <?R ZouHeRewrite(EQ, f, c(1, 0), "velocity", BC_Velocity) ?>
+<?R ZouHeRewrite(fMRT, f, c(1, 0), "velocity", BC_Velocity) ?>
 }
 
 CudaDeviceFunction void WPressure()
 {
-  <?R ZouHeRewrite(EQ, f, c(-1, 0), "pressure") ?>
+<?R ZouHeRewrite(fMRT, f, c(-1, 0), "pressure") ?>
+}
+
+CudaDeviceFunction void WPressureWConcentration()
+{
+<?R ZouHeRewrite(fMRT, f, c(-1, 0), "pressure") ?>
+  c[1] = C_inlet - c[0] - c[2] - c[3] - c[4];
 }
 
 CudaDeviceFunction void WVelocity()
 {
-  <?R ZouHeRewrite(EQ, f, c(-1, 0), "velocity", BC_Velocity) ?>
-  real_t C = 6.*( C_inlet - (c[0] + c[2] + c[4] + c[3] + c[7] + c[6]) );
-	c[1] = (1./9.) * C;
-	c[5] = (1./36.) * C;
-	c[8] = (1./36.) * C;
+<?R ZouHeRewrite(fMRT, f, c(-1, 0), "velocity", BC_Velocity) ?>
+}
+
+CudaDeviceFunction void WVelocityWConcentration()
+{
+<?R ZouHeRewrite(fMRT, f, c(-1, 0), "velocity", BC_Velocity) ?>
+  c[1] = C_inlet - c[0] - c[2] - c[3] - c[4];
 }
 
 CudaDeviceFunction void EPressure()
 {
-  <?R ZouHeRewrite(EQ, f, c(1, 0), "pressure") ?>
-  real_t C = 6.*( C_outlet - ( c[0] + c[2] + c[4] + c[1] + c[5] + c[8] ) );
-	c[3] = (1./ 9.) * C;
-	c[7] = (1./36.) * C;
-	c[6] = (1./36.) * C;
+<?R ZouHeRewrite(fMRT, f, c(1, 0), "pressure") ?>
+}
+
+CudaDeviceFunction void EPressureEConcentration()
+{
+<?R ZouHeRewrite(fMRT, f, c(1, 0), "pressure") ?>
+  c[3] = C_outlet - c[0] - c[1] - c[2] - c[4];
 }
 
 CudaDeviceFunction void NVelocity()
 {
-  <?R ZouHeRewrite(EQ, f, c(0,1), "velocity", BC_Velocity) ?>
+<?R ZouHeRewrite(fMRT, f, c(0,1), "velocity", BC_Velocity) ?>
 }
 
 CudaDeviceFunction void SVelocity()
 {
-  <?R ZouHeRewrite(EQ, f, c(0, -1), "velocity", BC_Velocity) ?>
+<?R ZouHeRewrite(fMRT, f, c(0, -1), "velocity", BC_Velocity) ?>
 }
 
 CudaDeviceFunction void NSymmetry()
 {
-  <?R Symmetry(2,-1,'f') ?>
+<?R Symmetry(2,-1,'f') ?>
 }
 
 CudaDeviceFunction void SSymmetry()
 {
-  <?R Symmetry(2,1,'f') ?>
+<?R Symmetry(2,1,'f') ?>
 }
 
-CudaDeviceFunction void CollisionMRT()
-{
-  <?R
-	MI = solve(EQ$mat)
+CudaDeviceFunction void CollisionMRT() {
+<?R 
+#region first population
+	MI = solve(fMRT$mat)
 	P = MI %*% diag(1/wi) %*% t(MI)
 
 	R = PV("R", 1:nrow(U)-1);
-	selR = EQ$order > 1
-	R[!selR] = EQ$Req[!selR]
-  ?>
+	selR = fMRT$order > 1
+	R[!selR] = fMRT$Req[!selR]
+?>
   
 	real_t <?R C(R,sep=",") ?>;
   real_t Usq=0;
 
-  <?R
+<?R
   S=PV("S",1:nrow(U)-1);
-	S[EQ$order == 2] = PV("S2")
-	S[EQ$order == 3] = PV("S3")
- 	S[EQ$order == 4] = PV("S4")   
-	C(R, f %*% EQ$mat);
-	C( R[selR], (R - EQ$Req)[selR]);
+	S[fMRT$order == 2] = PV("S2")
+	S[fMRT$order == 3] = PV("S3")
+ 	S[fMRT$order == 4] = PV("S4")   
+	C( R, f %*% fMRT$mat);
+	C( R[selR], (R - fMRT$Req)[selR]);
 	C( R[selR], (R * S)[selR]);
-  ?>
+?>
   real_t dJx =  GravitationX*rho ;
   real_t dJy =  GravitationY*rho ; 
 
@@ -227,18 +213,49 @@ CudaDeviceFunction void CollisionMRT()
   Jx = Jx + dJx - K*(Jx+dJx*0.5)/(1. + 0.5 * K) / rho;
   Jy = Jy + dJy - K*(Jy+dJy*0.5)/(1. + 0.5 * K) / rho;   
 
-  <?R
-  C(R[selR], (R + EQ$Req)[selR]);
-	C(f, R %*% solve(EQ$mat), float=F);
-  ?>
+<?R
+  C(R[selR], (R + fMRT$Req)[selR]);
+	C(f, R %*% solve(fMRT$mat), float=F);
+#endregion first population 
+?>
+
+<?R 
+#region second population 
+	R = PV("R", 1:nrow(CU)-1);
+  selR = cMRT$order < 2
+  R[selR] = cMRT$Req[selR]
+?>
+	real_t C, JCx, JCy;
+<?R
+  S=PV("SC",1:nrow(CU)-1);
+  S[cMRT$order == 1] = PV("SC1")
+	S[cMRT$order == 2] = PV("SC2")
+  C(R, c %*% cMRT$mat);
+  selR = cMRT$order > 0
+  C(R[selR], (R - cMRT$Req)[selR]);
+	C(R[selR], (R * S)[selR]);
+?>
+// -- Reaction
+  if(C < C_saturation) {
+    real_t Q = k * (C_saturation - C);
+    real_t dC = 2*Q;
+    real_t dh_Z = 2*Q/C_solid;
+    C += dC;  
+    h_Z += dh_Z;
+  }
+<?R
+  C(c, R %*% solve(cMRT$mat), float=F);
+#endregion second population
+?>
+
 }
 
-CudaDeviceFunction void ConcentrationCollisionBGK() {
+/*CudaDeviceFunction void CollisionBGK_c() {
 	real_t C = getC();
   real_t d = getRho();
 	vector_t u;
-	u.x =  (f[8]-f[7]-f[6]+f[5]-f[3]+f[1])/d;
-	u.y = (-f[8]-f[7]+f[6]+f[5]-f[4]+f[2])/d;
+  u.x =  (f[8]-f[7]-f[6]+f[5]-f[3]+f[1])/d;
+  u.y = (-f[8]-f[7]+f[6]+f[5]-f[4]+f[2])/d;
 
 	real_t c_eq[9];
   c_eq[0] = ( 2. + ( -u.y*u.y - u.x*u.x )*3. )*C*2./9.;
@@ -252,30 +269,30 @@ CudaDeviceFunction void ConcentrationCollisionBGK() {
   c_eq[8] = ( 1. + ( ( -1 + u.y )*u.y + ( 1 + u.x - u.y*3. )*u.x )*3. )*C/36.;
 
 	for (int i=0; i< 9; i++) {
-    c[i] = c[i] + omega_D * (c_eq[i]-c[i]);	
+    c[i] = c[i] + Omega_D * (c_eq[i]-c[i]);	
 	}
-}
+}*/
 
-CudaDeviceFunction void ConcentrationSourceAndEvolveHZ() {
+/*CudaDeviceFunction void Reaction() {
   real_t C = getC();
   if(C < C_saturation) {
-    real_t R = k * (C_saturation - C);
+    real_t Q = k * (C_saturation - C);
 
-    c[0] += 2 * R * 4./9.;
-    c[1] += 2 * R * 1./9;
-    c[2] += 2 * R * 1./9.;
-    c[3] += 2 * R * 1./9.;
-    c[4] += 2 * R * 1./9.;
-    c[5] += 2 * R * 1./36.;
-    c[6] += 2 * R * 1./36.;
-    c[7] += 2 * R * 1./36.;
-    c[8] += 2 * R * 1./36.;
+    c[0] += 2 * Q * 4./9.;
+    c[1] += 2 * Q * 1./9.;
+    c[2] += 2 * Q * 1./9.;
+    c[3] += 2 * Q * 1./9.;
+    c[4] += 2 * Q * 1./9.;
+    c[5] += 2 * Q * 1./36.;
+    c[6] += 2 * Q * 1./36.;
+    c[7] += 2 * Q * 1./36.;
+    c[8] += 2 * Q * 1./36.;
 
-    h_Z += 2 * R / C_solid;
+    h_Z += 2 * Q / C_solid;
   }
-}
+}*/
 
-// Get functions
+// --- Macroscopic output quantieties ---
 
 CudaDeviceFunction real_t getRho(){
 	return <?R C(sum(f)) ?>;
@@ -299,12 +316,6 @@ CudaDeviceFunction vector_t getU(){
 
   <?R C(PV(c("u.x","u.y")), f %*% U) ?>
 
-  <?R if ( any( DensityAll$group=="BC" ) ) { ?>
-    if (!IamBOUNDARY) {   
-      u.x += d*BC[0]*0.5;
-      u.y += d*BC[1]*0.5;
-    }
-  <?R } ?>
   u.x += d*GravitationX*0.5;
   u.y += d*GravitationY*0.5;
 
