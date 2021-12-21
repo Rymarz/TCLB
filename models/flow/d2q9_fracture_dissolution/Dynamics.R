@@ -14,6 +14,10 @@ AddDensity( name="c[1]", dx= 1, dy= 0, group="c")
 AddDensity( name="c[2]", dx= 0, dy= 1, group="c")
 AddDensity( name="c[3]", dx=-1, dy= 0, group="c")
 AddDensity( name="c[4]", dx= 0, dy=-1, group="c")
+AddDensity( name="c[5]", dx= 1, dy= 1, group="c")
+AddDensity( name="c[6]", dx=-1, dy= 1, group="c")
+AddDensity( name="c[7]", dx=-1, dy=-1, group="c")
+AddDensity( name="c[8]", dx= 1, dy=-1, group="c")
 
 AddDensity( name="h", dx=0, dy=0, group="HZ")
 
@@ -54,10 +58,10 @@ AddSetting(name="Saturation", default=1)
 AddSetting(name="k",default=1, comment='Reaction speed coefficient')
 AddSetting(name="SolidConcentration", default=100, comment='Solid concentration')
 
-AddSetting(name="SC1", default="0", comment='MRT CSx')
-AddSetting(name="SC2", default="0", comment='MRT CSx')
-AddSetting(name="SC3", default="0", comment='MRT CSx')
-# AddSetting(name="MagicNumber_D", default=0.25, comment='TRT concetration magic number')
+AddSetting(name="SC2", default="0", comment='MRT concentration Sx')
+AddSetting(name="SC3", default="0", comment='MRT concentration Sx')
+AddSetting(name="SC4", default="0", comment='MRT concentration Sx')
+AddSetting(name="MagicNumber_D", default=0.25, comment='TRT concetration magic number')
 
  
 # AddSetting(name="ConcentrationRelaxationRate_even", default=0, comment='TRT even concetration relaxation rate')

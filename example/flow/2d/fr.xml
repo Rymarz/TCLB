@@ -5,7 +5,7 @@
     <Param name="C_l" value="0.01m" gauge="1" />
     <Param name="rho" value="1000kg/m3" gauge="1"/>
 	</Units>
-  <Geometry nx="1m" ny="6">
+  <Geometry nx="10m" ny="6">
     <MRT>
       <Box />
     </MRT>
@@ -32,21 +32,21 @@
     <Param name="k" value="0" /> 
     <Param name="SolidConcentration" value="2.7e4/m3" />
     <Param name="Height" value="2e-4m" />
-    <Param name="Diffusivity" value="1e-6m2/s" />
+    <Param name="Diffusivity" value="1e-15m2/s" />
     <Param name="MagicNumber_D" value="0.25" />
   </Model>
 
   <HDF5 />
 
-  <Solve Iterations="1000">
-    <HDF5 Iterations="10"/>
+  <Solve Iterations="5000000">
+    <HDF5 Iterations="100000"/>
   </Solve>
 
   <Param name="k" value="2.5e-7m/s" /> 
-  <Param name="Concentration" value="0" zone="Inlet" />
+  <Param name="Concentration" value="0.01/m3" zone="Inlet" />
 
-  <Solve Iterations="1000">
-    <HDF5 Iterations="10"/>
+  <Solve Iterations="5000000">
+    <HDF5 Iterations="100000"/>
   </Solve>
 
 </CLBConfig>

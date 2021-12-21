@@ -134,7 +134,13 @@ CudaDeviceFunction void WPressure()
 CudaDeviceFunction void WPressureWConcentration()
 {
 <?R ZouHeRewrite(fMRT, f, c(-1, 0), "pressure") ?>
-  c[1] = Concentration - c[0] - c[2] - c[3] - c[4];
+//d2q5
+//c[1] = Concentration - c[0] - c[2] - c[3] - c[4];
+//d2q9
+  real_t C = 6.*( Concentration - (c[0] + c[2] + c[4] + c[3] + c[7] + c[6]) );
+	c[1] = (1./9.) * C;
+	c[5] = (1./36.) * C;
+	c[8] = (1./36.) * C;
 }
 
 CudaDeviceFunction void WVelocity()
@@ -145,7 +151,13 @@ CudaDeviceFunction void WVelocity()
 CudaDeviceFunction void WVelocityWConcentration()
 {
 <?R ZouHeRewrite(fMRT, f, c(-1, 0), "velocity", BC_Velocity) ?>
-  c[1] = Concentration - c[0] - c[2] - c[3] - c[4];
+//d2q5
+//c[1] = Concentration - c[0] - c[2] - c[3] - c[4];
+//d2q9
+  real_t C = 6.*( Concentration - (c[0] + c[2] + c[4] + c[3] + c[7] + c[6]) );
+	c[1] = (1./9.) * C;
+	c[5] = (1./36.) * C;
+	c[8] = (1./36.) * C;
 }
 
 CudaDeviceFunction void EPressure()
@@ -156,7 +168,13 @@ CudaDeviceFunction void EPressure()
 CudaDeviceFunction void EPressureEConcentration()
 {
 <?R ZouHeRewrite(fMRT, f, c(1, 0), "pressure") ?>
-  c[3] = Concentration - c[0] - c[1] - c[2] - c[4];
+//d2q5
+//c[3] = Concentration - c[0] - c[1] - c[2] - c[4];
+//d2q9
+  real_t C = 6.*( Concentration - ( c[0] + c[2] + c[4] + c[1] + c[5] + c[8] ) );
+	c[3] = (1./ 9.) * C;
+	c[7] = (1./36.) * C;
+	c[6] = (1./36.) * C;
 }
 
 CudaDeviceFunction void NVelocity()
@@ -224,23 +242,28 @@ CudaDeviceFunction void CollisionMRT() {
   R[!selR] = cMRT$Req[!selR]
 ?>
 	real_t C, JCx, JCy;
-
+  real_t omega_even = 2.*(2.-ConcentrationRelaxationRate)/(ConcentrationRelaxationRate*(4.*MagicNumber_D-1.)+2.);
+  real_t SC_even = 1. - omega_even;
 <?R
   S=PV("SC",1:nrow(CU)-1);
+  S[cMRT$order == 1] = PV("SC_even")
 	S[cMRT$order == 2] = PV("SC2")
+  S[cMRT$order == 3] = PV("SC_even")
+  S[cMRT$order == 4] = PV("SC2")
   C(R, c %*% cMRT$mat);
+  selR = cMRT$order > 0
   C(R[selR], (R - cMRT$Req)[selR]);
 	C(R[selR], (R * S)[selR]);
 ?>
-/* -- Reaction
-  if(C < C_saturation) {
-    real_t Q = k * (C_saturation - C);
+// -- Reaction
+  if(C < Saturation) {
+    real_t Q = k * (Saturation - C);
     real_t dC = 2*Q;
     real_t dh = 2*Q/SolidConcentration;
     C += dC;  
     h += dh;
   }
-*/
+
 <?R
   C(R[selR], (R + cMRT$Req)[selR]);
   C(c, R %*% solve(cMRT$mat), float=F);
@@ -262,7 +285,7 @@ CudaDeviceFunction real_t getP(){
 CudaDeviceFunction real_t getC(){
 	real_t C = <?R C(sum(c)) ?>;
 
-//  real_t Q = k * (C_saturation - C);
+//  real_t Q = k * (Saturation - C);
 //  real_t dC = Q;
 //  C += dC;  
 
