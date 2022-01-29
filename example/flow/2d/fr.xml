@@ -1,20 +1,20 @@
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="output/" permissive="true">
-  <Units>
-    <Param name="Viscosity" value="1e-6m2/s" gauge="0.166666666667" />
-    <Param name="Distance" value="0.01m" gauge="1" />
+	<Units>
+    <Param name="Viscosity" value="1e-6m2/s" gauge="0.000166666666667" />
+    <Param name="C_l" value="0.01m" gauge="1" />
     <Param name="rho" value="1000kg/m3" gauge="1"/>
 	</Units>
-  <Geometry nx="5m" ny="32">
+  <Geometry nx="10m" ny="6">
     <MRT>
       <Box />
     </MRT>
-    <WVelocity name="Inlet">
+    <WPressureWConcentration name="Inlet">
       <Inlet />
-    </WVelocity>
-    <EPressure name="Outlet"> 
+    </WPressureWConcentration>
+    <EPressureEConcentration name="Outlet"> 
       <Outlet />
-    </EPressure>
+    </EPressureEConcentration>
     <Inlet nx="1" dx="1">
       <Box />
     </Inlet>
@@ -25,6 +25,7 @@
   <Model>
     <!-- <Param name="VelocityX" value="5e-4m/s"/> -->
     <!-- 98.1Pa for each meter -->
+<<<<<<< HEAD
     <Param name="Pressure" value="0.001Pa" zone="Inlet" />
     <Param name="Pressure" value="0" zone="Outlet" />
     <Param name="C_saturation" value="2/m3" />
@@ -46,6 +47,30 @@
 
   <Solve Iterations="100">
     <HDF5 Iterations="1" />
+=======
+    <Param name="Pressure" value="9.81Pa" zone="Inlet"/>
+    <Param name="Pressure" value="0" zone="Outlet"/>
+    <Param name="Saturation" value="2.0/m3" />
+    <Param name="Concentration" value="2.0/m3" />
+    <Param name="k" value="0" /> 
+    <Param name="SolidConcentration" value="2.7e4/m3" />
+    <Param name="Height" value="2e-4m" />
+    <Param name="Diffusivity" value="1e-15m2/s" />
+    <Param name="MagicNumber_D" value="0.25" />
+  </Model>
+
+  <HDF5 />
+
+  <Solve Iterations="5000000">
+    <HDF5 Iterations="100000"/>
+  </Solve>
+
+  <Param name="k" value="2.5e-7m/s" /> 
+  <Param name="Concentration" value="0.01/m3" zone="Inlet" />
+
+  <Solve Iterations="5000000">
+    <HDF5 Iterations="100000"/>
+>>>>>>> soluteMRT
   </Solve>
 
 </CLBConfig>
