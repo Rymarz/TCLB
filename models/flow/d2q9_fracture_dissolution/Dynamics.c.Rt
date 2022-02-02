@@ -119,16 +119,28 @@ CudaDeviceFunction void SetEquilibrum_c(real_t C, real_t JCx, real_t JCy)
 ?>
 }
 
-CudaDeviceFunction void SetIncompressibleEquilibrium_SRT(real_t phi_x[9], real_t Phi, vector_t u){
-  phi_x[0] = ( 2*X + ( -u.y*u.y - u.x*u.x )*3. )*2./9.;
-  phi_x[1] = ( 2*X + ( -u.y*u.y + ( 1 + u.x )*u.x*2. )*3. )/18.;
-  phi_x[2] = ( 2*X + ( -u.x*u.x + ( 1 + u.y )*u.y*2. )*3. )/18.;
-  phi_x[3] = ( 2*X + ( -u.y*u.y + ( -1 + u.x )*u.x*2. )*3. )/18.;
-  phi_x[4] = ( 2*X + ( -u.x*u.x + ( -1 + u.y )*u.y*2. )*3. )/18.;
-  phi_x[5] = ( X + ( ( 1 + u.y )*u.y + ( 1 + u.x + u.y*3. )*u.x )*3. )/36.;
-  phi_x[6] = ( X + ( ( 1 + u.y )*u.y + ( -1 + u.x - u.y*3. )*u.x )*3. )/36.;
-  phi_x[7] = ( X + ( ( -1 + u.y )*u.y + ( -1 + u.x + u.y*3. )*u.x )*3. )/36.;
-  phi_x[8] = ( X + ( ( -1 + u.y )*u.y + ( 1 + u.x - u.y*3. )*u.x )*3. )/36.;
+CudaDeviceFunction void SetIncompressibleEquilibrium(real_t phi[9], real_t Phi, vector_t u){
+  phi[0] = ( 2*Phi + ( -u.y*u.y - u.x*u.x )*3. )*2./9.;
+  phi[1] = ( 2*Phi + ( -u.y*u.y + ( 1 + u.x )*u.x*2. )*3. )/18.;
+  phi[2] = ( 2*Phi + ( -u.x*u.x + ( 1 + u.y )*u.y*2. )*3. )/18.;
+  phi[3] = ( 2*Phi + ( -u.y*u.y + ( -1 + u.x )*u.x*2. )*3. )/18.;
+  phi[4] = ( 2*Phi + ( -u.x*u.x + ( -1 + u.y )*u.y*2. )*3. )/18.;
+  phi[5] = ( Phi + ( ( 1 + u.y )*u.y + ( 1 + u.x + u.y*3. )*u.x )*3. )/36.;
+  phi[6] = ( Phi + ( ( 1 + u.y )*u.y + ( -1 + u.x - u.y*3. )*u.x )*3. )/36.;
+  phi[7] = ( Phi + ( ( -1 + u.y )*u.y + ( -1 + u.x + u.y*3. )*u.x )*3. )/36.;
+  phi[8] = ( Phi + ( ( -1 + u.y )*u.y + ( 1 + u.x - u.y*3. )*u.x )*3. )/36.;
+}
+
+CudaDeviceFunction void SetEquilibrium(real_t phi[9], real_t Phi, vector_t u){
+  phi[0] = ( 2. + ( -u.y*u.y - u.x*u.x )*3. )*Phi*2./9.;
+  phi[1] = ( 2. + ( -u.y*u.y + ( 1 + u.x )*u.x*2. )*3. )*Phi/18.;
+  phi[2] = ( 2. + ( -u.x*u.x + ( 1 + u.y )*u.y*2. )*3. )*Phi/18.;
+  phi[3] = ( 2. + ( -u.y*u.y + ( -1 + u.x )*u.x*2. )*3. )*Phi/18.;
+  phi[4] = ( 2. + ( -u.x*u.x + ( -1 + u.y )*u.y*2. )*3. )*Phi/18.;
+  phi[5] = ( 1. + ( ( 1 + u.y )*u.y + ( 1 + u.x + u.y*3. )*u.x )*3. )*Phi/36.;
+  phi[6] = ( 1. + ( ( 1 + u.y )*u.y + ( -1 + u.x - u.y*3. )*u.x )*3. )*Phi/36.;
+  phi[7] = ( 1. + ( ( -1 + u.y )*u.y + ( -1 + u.x + u.y*3. )*u.x )*3. )*Phi/36.;
+  phi[8] = ( 1. + ( ( -1 + u.y )*u.y + ( 1 + u.x - u.y*3. )*u.x )*3. )*Phi/36.;
 }
 
 CudaDeviceFunction void BounceBack()
@@ -221,14 +233,14 @@ CudaDeviceFunction void CollisionIncompressibleSRT() {
   u.y = ((-f[8]-f[7]+f[6]+f[5]-f[4]+f[2] )/d + GravitationY/ConcentrationRelaxationRate );
   real_t C = getC();
 
-  real_t phi_x[9];
-  SetIncompressibleEquilibrium_SRT(phi_x, d, u);
+  real_t phi_eq[9];
+  SetIncompressibleEquilibrium(phi_eq, d, u);
   for (int i=0; i< 9; i++) {
-    f[i] = f[i] + RelaxationRate*(phi_x[i]-f[i]);	
+    f[i] = f[i] + RelaxationRate*(phi_eq[i]-f[i]);	
   }
-  SetIncompressibleEquilibrium_SRT(phi_x, C, u);
+  SetEquilibrium(phi_eq, C, u);
   for (int i=0; i< 9; i++) {
-    c[i] = c[i] + ConcentrationRelaxationRate*(phi_x[i]-c[i]);	
+    c[i] = c[i] + ConcentrationRelaxationRate*(phi_eq[i]-c[i]);	
   }
 }
 

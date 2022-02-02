@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/Pe=100_Da=5e-2_lam=2e-4" permissive="true">
+  <!-- C = physical_value / gauge -->
+  <Units>
+    <Param name="Viscosity" value="1e-6m2/s" gauge="1" />
+    <Param name="C_l" value="0.02m" gauge="1" />
+    <Param name="rho" value="1000kg/m3" gauge="1"/>
+	</Units>
+  <Geometry nx="1024" ny="128">
+    <IncompressibleSRT>
+      <Box />
+    </IncompressibleSRT>
+    <WPressureWConcentration name="Inlet">
+      <Inlet />
+    </WPressureWConcentration>
+    <EPressureEConcentration name="Outlet">
+      <Outlet />
+    </EPressureEConcentration>
+    <Inlet nx="1" dx="1">
+      <Box />
+    </Inlet>
+    <Outlet nx="1" dx="-1">
+      <Box />
+    </Outlet>
+  </Geometry>
+
+  <!-- Pe = q_0/D = 100       -->
+  <!-- Da = kh_0 / q_0 = 5e-2 -->
+  <!-- Lambda = h_0 / L = 1e-5 -->
+  <!-- Dimensionless -->
+  <Model>
+    <Param name="Pressure" value=".1" zone="Inlet" />
+    <Param name="Pressure" value="-.1" zone="Outlet" />
+    <Param name="Saturation" value="3/m3" />
+    <Param name="Concentration" value="3/m3" />
+    <Param name="k" value="0" />
+    <Param name="SolidConcentration" value="2.7e4/m3" />
+    <Param name="Height" value="0.2048" />
+    <Param name="Diffusivity" value="1" />
+    <Param name="MagicNumber_D" value="0.25" />
+  </Model>
+
+  <!-- Dimensioned -->
+  <!-- <Param name="VelocityX" value="5e-4m/s"/> -->
+  <!-- 98.1Pa for each meter  -->
+  <!-- <Model>    
+    <Param name="Pressure" value="0.01" zone="Inlet"/>
+    <Param name="Pressure" value="0" zone="Outlet"/>
+    <Param name="Saturation" value="3.0/m3" />
+    <Param name="Concentration" value="3.0/m3" />
+    <Param name="k" value="0" /> 
+    <Param name="SolidConcentration" value="2.7e4/m3" />
+    <Param name="Height" value="2e-4m" />
+    <Param name="Diffusivity" value="6.73e-10m2/s" />
+    <Param name="MagicNumber_D" value="0.25" />
+  </Model> -->
+  <RunR>
+    <!-- Solver$Fields$Height_parameter[] = rnorm(100*16, mean = 0.2048, sd=0.0002);
+    Solver$Actions$InitFromFields(); -->
+  </RunR>
+
+  <HDF5 />
+
+  <Solve Iterations="100"></Solve>
+
+  <Param name="k" value="2.44140625E-04" />
+  <Param name="Concentration" value="1/m3" zone="Inlet" />
+
+  <Solve Iterations="100">
+    <HDF5 Iterations="10" />
+  </Solve>
+
+</CLBConfig>
