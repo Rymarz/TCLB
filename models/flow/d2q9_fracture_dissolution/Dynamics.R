@@ -33,7 +33,7 @@ AddQuantity(name="Rho", unit="kg/m3")
 AddQuantity(name="P", unit="Pa")
 AddQuantity(name="U", unit="m/s",vector=T)
 AddQuantity(name="H", unit="m")
-AddQuantity(name="C", unit="1/m3")
+AddQuantity(name="C", unit="kg/m3")
 
 # Settings
 AddSetting(name="RelaxationRate", S2='1-RelaxationRate', comment='one over relaxation time')
