@@ -58,10 +58,10 @@ CudaDeviceFunction vector_t getU(){
     u.y += GravitationY*0.5;
 
     real_t nu = -(S2 + 1)/(6*S2 - 6);
-    real_t K = 6. * nu / h / h;   
+    real_t K = 12. * nu / h / h;   
 
     u.x = u.x - K*u.x*d*0.5;
-    u.x = u.y - K*u.y*d*0.5; 
+    u.y = u.y - K*u.y*d*0.5; 
     
     u.z = 0.0;
 	return u;
@@ -278,7 +278,7 @@ CudaDeviceFunction void CollisionMRT()
 
     if (NodeType & NODE_Brinkman) {
         real_t nu = -(S2 + 1)/(6*S2 - 6);
-        real_t K = 6. * nu / h / h;   
+        real_t K = 12. * nu / h / h;   
         Jx = Jx - K*Jx;
         Jy = Jy - K*Jy; 
     }
