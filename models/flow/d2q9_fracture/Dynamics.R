@@ -13,6 +13,8 @@ AddDensity( name="f[6]", dx=-1, dy= 1, group="f")
 AddDensity( name="f[7]", dx=-1, dy=-1, group="f")
 AddDensity( name="f[8]", dx= 1, dy=-1, group="f")
 
+AddDensity( name="h", dx=0, dy=0, group="HZ")
+
 #AddField(name="f[1]", dx=1);
 
 # THIS QUANTITIES ARE NEEDED FOR PYTHON INTEGRATION EXAMPLE
@@ -25,7 +27,6 @@ if (Options$bc) {
 	AddDensity( name="BC[1]", group="BC", parameter=TRUE)
 }
 
-
 # Quantities - table of fields that can be exported from the LB lattice (like density, velocity etc)
 #  name - name of the field
 #  type - C type of the field, "real_t" - for single/double float, and "vector_t" for 3D vector single/double float
@@ -34,9 +35,9 @@ if (Options$bc) {
 # [type] get[something]() { return ...; }
 
 AddQuantity(name="Rho",unit="kg/m3")
+AddQuantity(name="P", unit="Pa")
 AddQuantity(name="U",unit="m/s",vector=T)
-
-
+AddQuantity(name="H", unit="m")
 
 # Settings - table of settings (constants) that are taken from a .xml file
 #  name - name of the constant variable
@@ -55,6 +56,9 @@ AddSetting(name="Pressure", default=0, comment='inlet/outlet/init density', zona
 
 AddSetting(name="GravitationX")
 AddSetting(name="GravitationY")
+
+AddSetting(name="Height", default=1, zonal=TRUE) 
+
 # Globals - table of global integrals that can be monitored and optimized
 
 AddGlobal(name="PressureLoss", comment='pressure loss', unit="1mPa")
@@ -83,3 +87,5 @@ AddNodeType(name="Outlet", group="OBJECTIVE")
 AddNodeType(name="Solid", group="BOUNDARY")
 AddNodeType(name="Wall", group="BOUNDARY")
 AddNodeType(name="MRT", group="COLLISION")
+
+AddNodeType(name="Brinkman", group="OBJECTIVE")
