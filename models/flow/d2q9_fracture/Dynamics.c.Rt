@@ -240,24 +240,24 @@ CudaDeviceFunction void WPressureWConcentration()
 {
 <?R ZouHeRewrite(fMRT, f, c(-1, 0), "pressure") ?>
 //d2q5
-// c[1] = Concentration - c[0] - c[2] - c[3] - c[4];
+c[1] = Concentration - c[0] - c[2] - c[3] - c[4];
 //d2q9
-  real_t C = 6.*( Concentration - (c[0] + c[2] + c[4] + c[3] + c[7] + c[6]) );
-  c[1] = (1./9.) * C;
-  c[5] = (1./36.) * C;
-  c[8] = (1./36.) * C;
+//   real_t C = 6.*( Concentration - (c[0] + c[2] + c[4] + c[3] + c[7] + c[6]) );
+//   c[1] = (1./9.) * C;
+//   c[5] = (1./36.) * C;
+//   c[8] = (1./36.) * C;
 }
 
 CudaDeviceFunction void EPressureEConcentration()
 {
 <?R ZouHeRewrite(fMRT, f, c(1, 0), "pressure") ?>
 //d2q5
-// c[3] = Concentration - c[0] - c[1] - c[2] - c[4];
+c[3] = Concentration - c[0] - c[1] - c[2] - c[4];
 //d2q9
-  real_t C = 6.*( Concentration - ( c[0] + c[2] + c[4] + c[1] + c[5] + c[8] ) );
-  c[3] = (1./ 9.) * C;
-  c[7] = (1./36.) * C;
-  c[6] = (1./36.) * C;
+//   real_t C = 6.*( Concentration - ( c[0] + c[2] + c[4] + c[1] + c[5] + c[8] ) );
+//   c[3] = (1./ 9.) * C;
+//   c[7] = (1./36.) * C;
+//   c[6] = (1./36.) * C;
 }
 
 CudaDeviceFunction void CollisionMRT()

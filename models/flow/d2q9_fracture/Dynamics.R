@@ -20,10 +20,10 @@ AddDensity(name = "c[1]", dx = 1, dy = 0, group = "c")
 AddDensity(name = "c[2]", dx = 0, dy = 1, group = "c")
 AddDensity(name = "c[3]", dx = -1, dy = 0, group = "c")
 AddDensity(name = "c[4]", dx = 0, dy = -1, group = "c")
-AddDensity(name = "c[5]", dx = 1, dy = 1, group = "c")
-AddDensity(name = "c[6]", dx = -1, dy = 1, group = "c")
-AddDensity(name = "c[7]", dx = -1, dy = -1, group = "c")
-AddDensity(name = "c[8]", dx = 1, dy = -1, group = "c")
+# AddDensity(name = "c[5]", dx = 1, dy = 1, group = "c")
+# AddDensity(name = "c[6]", dx = -1, dy = 1, group = "c")
+# AddDensity(name = "c[7]", dx = -1, dy = -1, group = "c")
+# AddDensity(name = "c[8]", dx = 1, dy = -1, group = "c")
 
 # AddField(name="f[1]", dx=1);
 
