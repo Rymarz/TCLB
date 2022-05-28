@@ -61,15 +61,18 @@ CudaDeviceFunction vector_t getU(){
         u.y += BC[1]*0.5;
     }
 <?R } ?>
+    // half of the source added
     u.x += GravitationX*0.5;
     u.y += GravitationY*0.5;
 
-    real_t nu = -(S2 + 1)/(6*S2 - 6);
-    real_t K = 12. * nu / h / h;   
+    if (NodeType & NODE_Brinkman) {
+        real_t nu = -(S2 + 1)/(6*S2 - 6);
+        real_t K = 12. * nu / h / h;   
 
-    u.x = u.x - K*u.x*d*0.5;
-    u.y = u.y - K*u.y*d*0.5; 
-    
+        u.x = u.x - K*u.x*0.5;
+        u.y = u.y - K*u.y*0.5; 
+    }
+     
     u.z = 0.0;
 	return u;
 }
@@ -79,7 +82,18 @@ CudaDeviceFunction real_t getH(){
 }  
 
 CudaDeviceFunction real_t getC(){
-    return <?R C(sum(c)) ?>;
+    real_t C = <?R C(sum(c)) ?>;
+
+    // half of the source added
+    if (NodeType & NODE_Reaction) {
+        if(C < Saturation) {
+            real_t ReactionConstant_eff = ReactionConstant * Diffusivity * Sherwood / (Diffusivity * Sherwood + 2*ReactionConstant*h);
+            real_t Q = ReactionConstant_eff * (Saturation - C);
+            C += Q;  
+        }
+    }
+
+    return C;
 }
 
 CudaDeviceFunction float2 Color() {
@@ -240,24 +254,24 @@ CudaDeviceFunction void WPressureWConcentration()
 {
 <?R ZouHeRewrite(fMRT, f, c(-1, 0), "pressure") ?>
 //d2q5
-c[1] = Concentration - c[0] - c[2] - c[3] - c[4];
+// c[1] = Concentration - c[0] - c[2] - c[3] - c[4];
 //d2q9
-//   real_t C = 6.*( Concentration - (c[0] + c[2] + c[4] + c[3] + c[7] + c[6]) );
-//   c[1] = (1./9.) * C;
-//   c[5] = (1./36.) * C;
-//   c[8] = (1./36.) * C;
+  real_t C = 6.*( Concentration - (c[0] + c[2] + c[4] + c[3] + c[7] + c[6]) );
+  c[1] = (1./9.) * C;
+  c[5] = (1./36.) * C;
+  c[8] = (1./36.) * C;
 }
 
 CudaDeviceFunction void EPressureEConcentration()
 {
 <?R ZouHeRewrite(fMRT, f, c(1, 0), "pressure") ?>
 //d2q5
-c[3] = Concentration - c[0] - c[1] - c[2] - c[4];
+// c[3] = Concentration - c[0] - c[1] - c[2] - c[4];
 //d2q9
-//   real_t C = 6.*( Concentration - ( c[0] + c[2] + c[4] + c[1] + c[5] + c[8] ) );
-//   c[3] = (1./ 9.) * C;
-//   c[7] = (1./36.) * C;
-//   c[6] = (1./36.) * C;
+  real_t C = 6.*( Concentration - ( c[0] + c[2] + c[4] + c[1] + c[5] + c[8] ) );
+  c[3] = (1./ 9.) * C;
+  c[7] = (1./36.) * C;
+  c[6] = (1./36.) * C;
 }
 
 CudaDeviceFunction void CollisionMRT()
@@ -341,10 +355,20 @@ CudaDeviceFunction void CollisionMRT()
     SC[cMRT$order == 2] = PV("SC2")
     SC[cMRT$order == 3] = PV("SC_even")
     SC[cMRT$order == 4] = PV("SC2")
-
     C(RC, c %*% cMRT$mat);
     C(RC[selCR], (RC - cMRT$Req)[selCR]);
     C(RC[selCR], (RC * SC)[selCR]);
+?>
+    if (NodeType & NODE_Reaction) {
+        if(C < Saturation) {
+            real_t ReactionConstant_eff = ReactionConstant * Diffusivity * Sherwood / (Diffusivity * Sherwood + 2*ReactionConstant*h);
+            real_t Q = ReactionConstant_eff * (Saturation - C);
+            C = C + 2*Q;  
+        } else {
+            C = Saturation;
+        }
+    }
+<?R
     C(RC[selCR], (RC + cMRT$Req)[selCR]);
     C(c, RC %*% solve(cMRT$mat), float=F);
 ?>

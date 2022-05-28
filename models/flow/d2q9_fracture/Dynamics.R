@@ -20,10 +20,10 @@ AddDensity(name = "c[1]", dx = 1, dy = 0, group = "c")
 AddDensity(name = "c[2]", dx = 0, dy = 1, group = "c")
 AddDensity(name = "c[3]", dx = -1, dy = 0, group = "c")
 AddDensity(name = "c[4]", dx = 0, dy = -1, group = "c")
-# AddDensity(name = "c[5]", dx = 1, dy = 1, group = "c")
-# AddDensity(name = "c[6]", dx = -1, dy = 1, group = "c")
-# AddDensity(name = "c[7]", dx = -1, dy = -1, group = "c")
-# AddDensity(name = "c[8]", dx = 1, dy = -1, group = "c")
+AddDensity(name = "c[5]", dx = 1, dy = 1, group = "c")
+AddDensity(name = "c[6]", dx = -1, dy = 1, group = "c")
+AddDensity(name = "c[7]", dx = -1, dy = -1, group = "c")
+AddDensity(name = "c[8]", dx = 1, dy = -1, group = "c")
 
 # AddField(name="f[1]", dx=1);
 
@@ -72,15 +72,16 @@ AddSetting(name = "Height", default = 1, zonal = TRUE)
 AddSetting(name = "ConcentrationRelaxationRate", SC2 = "1-ConcentrationRelaxationRate", default = 0, comment = "one over concentration relaxation time")
 AddSetting(name = "Diffusivity", ConcentrationRelaxationRate = "1.0/(3*Diffusivity+0.5)", default = 0.166666667, comment = "diffusivity")
 AddSetting(name = "Concentration", default = 0, comment = "inlet/outlet/init concentration", zonal = T)
-# AddSetting(name = "Saturation", default = 1, comment = "Saturation concentration")
-# AddSetting(name = "ReactionConstant", default = 1, comment = "Reaction speed coefficient")
-# AddSetting(name = "SolidConcentration", default = 1, comment = "Solid concentration")
+AddSetting(name = "Saturation", default = 1, comment = "Saturation concentration")
+AddSetting(name = "ReactionConstant", default = 1, comment = "Reaction speed coefficient")
+AddSetting(name = "SolidConcentration", default = 1, comment = "Solid concentration")
+AddSetting(name = "Sherwood", default = 8, comment = "Sherwood number")
+
 
 AddSetting(name = "SC2", default = "0", comment = "MRT concentration SCx")
 AddSetting(name = "SC3", default = "0", comment = "MRT concentration SCx")
 AddSetting(name = "SC4", default = "0", comment = "MRT concentration SCx")
 AddSetting(name = "MagicNumber_D", default = 0.25, comment = "TRT concetration magic number")
-
 
 # Globals - table of global integrals that can be monitored and optimized
 AddGlobal(name = "PressureLoss", comment = "pressure loss", unit = "1mPa")
@@ -109,3 +110,4 @@ AddNodeType(name = "Wall", group = "BOUNDARY")
 AddNodeType(name = "MRT", group = "COLLISION")
 
 AddNodeType(name = "Brinkman", group = "OBJECTIVE")
+AddNodeType(name = "Reaction", group = "OBJECTIVE")
