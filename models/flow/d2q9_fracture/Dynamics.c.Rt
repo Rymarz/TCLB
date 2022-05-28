@@ -166,6 +166,12 @@ CudaDeviceFunction void Run() {
     case NODE_SSymmetry:
         SSymmetry();
         break;
+    case NODE_WPressureWConcentration:
+		WPressureWConcentration();
+		break;
+    case NODE_EPressureEConcentration:
+		EPressureEConcentration();
+		break;
     }
     if (NodeType & NODE_MRT)
     {
