@@ -55,7 +55,7 @@ AddQuantity(name = "C", unit = "kg/m3")
 #  comment - additional comment
 # You can state that another setting is 'derived' from this one stating for example: RelaxationRate='1.0/(3*Viscosity + 0.5)'
 
-AddSetting(name = "RelaxationRate", S2 = "1-RelaxationRate", comment = "one over relaxation time")
+AddSetting(name = "RelaxationRate", S_even = "1-RelaxationRate", comment = "one over relaxation time")
 AddSetting(name = "Viscosity", RelaxationRate = "1.0/(3*Viscosity + 0.5)", default = 0.16666666, comment = "viscosity")
 AddSetting(name = "VelocityX", default = 0, comment = "inlet/outlet/init velocity", zonal = T)
 AddSetting(name = "VelocityY", default = 0, comment = "inlet/outlet/init velocity", zonal = T)
@@ -63,13 +63,13 @@ AddSetting(name = "Pressure", default = 0, comment = "inlet/outlet/init density"
 AddSetting(name = "GravitationX", default = 0, comment = "body/external acceleration", zonal = T)
 AddSetting(name = "GravitationY", default = 0, comment = "body/external acceleration", zonal = T)
 
-AddSetting(name = "S2", default = "0", comment = "MRT Sx")
-AddSetting(name = "S3", default = "0", comment = "MRT Sx")
-AddSetting(name = "S4", default = "0", comment = "MRT Sx")
+AddSetting(name = "S_even", default = "0", comment = "MRT concentration Sx")
+AddSetting(name = "S_odd", default = "0", comment = "MRT concentration Sx")
+AddSetting(name = "MagicNumber", default = 0.25, comment = "TRT magic number")
 
 AddSetting(name = "Height", default = 1, zonal = TRUE)
 
-AddSetting(name = "ConcentrationRelaxationRate", SC2 = "1-ConcentrationRelaxationRate", default = 0, comment = "one over concentration relaxation time")
+AddSetting(name = "ConcentrationRelaxationRate", SC_even = "1-ConcentrationRelaxationRate", default = 0, comment = "one over concentration relaxation time")
 AddSetting(name = "Diffusivity", ConcentrationRelaxationRate = "1.0/(3*Diffusivity+0.5)", default = 0.166666667, comment = "diffusivity")
 AddSetting(name = "Concentration", default = 0, comment = "inlet/outlet/init concentration", zonal = T)
 AddSetting(name = "Saturation", default = 1, comment = "Saturation concentration")
@@ -78,9 +78,8 @@ AddSetting(name = "SolidConcentration", default = 1, comment = "Solid concentrat
 AddSetting(name = "Sherwood", default = 8, comment = "Sherwood number")
 
 
-AddSetting(name = "SC2", default = "0", comment = "MRT concentration SCx")
-AddSetting(name = "SC3", default = "0", comment = "MRT concentration SCx")
-AddSetting(name = "SC4", default = "0", comment = "MRT concentration SCx")
+AddSetting(name = "SC_even", default = "0", comment = "MRT concentration SCx")
+AddSetting(name = "SC_odd", default = "0", comment = "MRT concentration SCx")
 AddSetting(name = "MagicNumber_D", default = 0.25, comment = "TRT concetration magic number")
 
 # Globals - table of global integrals that can be monitored and optimized
