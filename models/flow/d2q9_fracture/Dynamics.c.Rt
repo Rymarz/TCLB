@@ -23,8 +23,7 @@
     CU = as.matrix(Density[Density$group=='c',c("dx","dy")])
 
 # Creating objects which store all MRT needed information
-
-	# fMRT = MRT_eq(U, ortogonal=FALSE)
+    # fMRT = MRT_eq(U, ortogonal=FALSE)
     # wi = subst(fMRT$Req, Jx=0, Jy=0, Jz=0)
     # wi = subst(wi, rho=1)
     # wi = gapply(wi,function(x) x$.M, simplify=TRUE)
@@ -36,9 +35,20 @@
 	# H = chol(W[i,i])[i,i]
 	# H = H * c(1,sqrt(3)/3,sqrt(3)/3,sqrt(2),sqrt(2),1,sqrt(6)/3,sqrt(6)/3,2)
 	# B = fMRT$mat %*% t(H)
+	# fMRT = MRT_eq(U, mat=B)
 
 	fMRT = MRT_eq(U, rho, J, order=2)
     cMRT = MRT_eq(CU, C, C*u, order=2)
+
+    # incomp_feq returns incompressible equilibrium distribution
+    incomp_feq = function( d, u ) {
+        weights = c(4./9., 1./9., 1./9., 1./9., 1./9., 1./36., 1./36., 1./36., 1./36.)
+        c_sq = 1/3.
+        weights*((u %*% t(U))*( 1/ c_sq) + ((u %*% t(U)) * (u %*% t(U)))*(1/(c_sq*c_sq*2)) - sum(u*u)*(1/(c_sq*2)) + d)
+    }
+    fMRT_incomp = MRT_eq(U, rho, u, order=2)
+    fMRT_incomp$feq = incomp_feq(rho,u)
+    fMRT_incomp$Req = incomp_feq(rho,u) %*% fMRT_incomp$mat
 ?>
 
 CudaDeviceFunction real_t getRho(){
@@ -109,11 +119,16 @@ CudaDeviceFunction float2 Color() {
 }
 
 CudaDeviceFunction void SetEquilibrum(real_t rho, real_t Jx, real_t Jy, real_t C, real_t ux, real_t uy) {
+    switch (NodeType & NODE_COLLISION) {  
+        case NODE_MRT:
+            <?R C( f, fMRT$feq) ?>
+		break;
+    case NODE_IncompressibleMRT:
+            <?R C( f, fMRT_incomp$feq) ?>
+		break;
+    }  
 <?R
-	feq = fMRT$Req %*% solve(fMRT$mat)
-	C( f, feq)
-    ceq = cMRT$Req %*% solve(cMRT$mat)
-	C( c, ceq)
+	C( c, cMRT$feq)
 ?>
 
 <?R if ( Options$bc ) { ?>
@@ -152,45 +167,52 @@ CudaDeviceFunction void Init() {
 
 CudaDeviceFunction void Run() {
     switch (NodeType & NODE_BOUNDARY) {
-	case NODE_Solid:
-	case NODE_Wall:
-		BounceBack();
-		break;
-	case NODE_EVelocity:
-		EVelocity();
-		break;
-	case NODE_WPressure:
-		WPressure();
-		break;
-	case NODE_WVelocity:
-		WVelocity();
-		break;
-	case NODE_EPressure:
-		EPressure();
-		break;
-	case NODE_NVelocity:
-		NVelocity();
-		break;
-	case NODE_SVelocity:
-		SVelocity();
-		break;
-    case NODE_NSymmetry:
-        NSymmetry();
-        break;
-    case NODE_SSymmetry:
-        SSymmetry();
-        break;
-    case NODE_WPressureWConcentration:
-		WPressureWConcentration();
-		break;
-    case NODE_EPressureEConcentration:
-		EPressureEConcentration();
-		break;
+        case NODE_Solid:
+        case NODE_Wall:
+            BounceBack();
+            break;
+        case NODE_EVelocity:
+            EVelocity();
+            break;
+        case NODE_WPressure:
+            WPressure();
+            break;
+        case NODE_WVelocity:
+            WVelocity();
+            break;
+        case NODE_EPressure:
+            EPressure();
+            break;
+        case NODE_NVelocity:
+            NVelocity();
+            break;
+        case NODE_SVelocity:
+            SVelocity();
+            break;
+        case NODE_NSymmetry:
+            NSymmetry();
+            break;
+        case NODE_SSymmetry:
+            SSymmetry();
+            break;
+        case NODE_WPressureWConcentration:
+            WPressureWConcentration();
+            break;
+        case NODE_EPressureEConcentration:
+            EPressureEConcentration();
+            break;
     }
-    if (NodeType & NODE_MRT)
-    {
-		CollisionMRT();
+
+    switch (NodeType & NODE_COLLISION) {
+        case NODE_MRT:
+            CollisionMRT();
+        break;
+        case NODE_IncompressibleMRT:
+            CollisionIncompressibleMRT();
+        break;
     }
+
+    ConcentrationCollisionMRT();
 }
 
 CudaDeviceFunction void BounceBack()
@@ -276,7 +298,6 @@ CudaDeviceFunction void EPressureEConcentration()
 
 CudaDeviceFunction void CollisionMRT()
 {
-// refion f population 
 <?R
 	R = PV("R", 1:nrow(U)-1);
 	selR = fMRT$order > 1
@@ -336,8 +357,72 @@ CudaDeviceFunction void CollisionMRT()
     C( R[selR], (R + fMRT$Req)[selR])
 	C( f, R %*% solve(fMRT$mat), float=F)
 ?>
-// endregion f population 
-// region c population 
+}
+
+CudaDeviceFunction void CollisionIncompressibleMRT()
+{
+<?R
+	R = PV("R", 1:nrow(U)-1);
+	selR = fMRT_incomp$order > 1
+	R[!selR] = fMRT_incomp$Req[!selR]
+?>
+	real_t <?R C(R,sep=",") ?>;
+    real_t Usq=0;
+<?R
+    S=PV("S",1:nrow(U)-1);
+	S[fMRT_incomp$order == 2] = PV("S2")
+	S[fMRT_incomp$order == 3] = PV("S3")
+ 	S[fMRT_incomp$order == 4] = PV("S4")   
+	C( R, f %*% fMRT_incomp$mat );
+?>
+
+    switch (NodeType & NODE_OBJECTIVE) {
+        case NODE_Outlet:
+<?R 
+            Usq=PV('Usq')
+            C(Usq,sum(u%*%u))
+?>
+            AddToOutletFlux(ux/rho);
+            AddToPressureLoss(-ux/rho*((rho-1.)/3. + Usq/rho/2.));
+        break;
+        case NODE_Inlet:
+<?R
+            Usq=PV('Usq')
+            C(Usq,sum(u%*%u))
+?>
+           AddToInletFlux(ux/rho);
+           AddToPressureLoss(ux/rho*((rho-1.)/3. + Usq/rho/2.));
+       break;
+    }
+
+<?R
+	C( R[selR], (R - fMRT_incomp$Req)[selR]);
+	C( R[selR], (R * S)[selR]);
+?>
+
+<?R if ( Options$bc ) { ?>
+    if (!IamBOUNDARY) {
+        ux = ux + GravitationX + BC[0];
+        uy = uy + GravitationY + BC[1]; 
+    }
+<?R } else { ?>
+    ux = ux + GravitationX*rho;
+    uy = uy + GravitationY*rho; 
+<?R } ?>
+
+    if (NodeType & NODE_Brinkman) {
+        real_t nu = -(S2 + 1)/(6*S2 - 6);
+        real_t K = 12. * nu / h / h;   
+        ux = ux - K*ux;
+        uy = uy - K*uy; 
+    }
+<?R
+    C( R[selR], (R + fMRT_incomp$Req)[selR])
+	C( f, R %*% solve(fMRT$mat), float=F)
+?>
+}
+
+CudaDeviceFunction void ConcentrationCollisionMRT() {
 <?R 
     RC = PV("RC", 1:nrow(CU)-1);
     selCR = cMRT$order > 0
@@ -372,5 +457,4 @@ CudaDeviceFunction void CollisionMRT()
     C(RC[selCR], (RC + cMRT$Req)[selCR]);
     C(c, RC %*% solve(cMRT$mat), float=F);
 ?>
-// endregion c population 
 }
