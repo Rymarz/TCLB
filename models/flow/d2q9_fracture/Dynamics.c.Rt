@@ -432,14 +432,14 @@ CudaDeviceFunction void ConcentrationCollisionMRT() {
     real_t ux, uy;
     ux = f[8] - f[7] - f[6] + f[5] - f[3] + f[1];
     uy = -f[8] - f[7] + f[6] + f[5] - f[4] + f[2];
-    real_t omega_even = 2.*(2.-ConcentrationRelaxationRate)/(ConcentrationRelaxationRate*(4.*MagicNumber_D-1.)+2.);
-    real_t SC_even = 1. - omega_even;
+    real_t omega_odd = 2.*(2.-ConcentrationRelaxationRate)/(ConcentrationRelaxationRate*(4.*MagicNumber_D-1.)+2.);
+    real_t SC_odd = 1. - omega_odd;
 <?R
     SC = PV("SC",1:nrow(CU)-1);
-    SC[cMRT$order == 1] = PV("SC_even")
+    SC[cMRT$order == 1] = PV("SC_odd")
     SC[cMRT$order == 2] = PV("SC2")
-    SC[cMRT$order == 3] = PV("SC_even")
-    SC[cMRT$order == 4] = PV("SC2")
+    SC[cMRT$order == 3] = PV("SC3")
+    SC[cMRT$order == 4] = PV("SC4")
     C(RC, c %*% cMRT$mat);
     C(RC[selCR], (RC - cMRT$Req)[selCR]);
     C(RC[selCR], (RC * SC)[selCR]);
