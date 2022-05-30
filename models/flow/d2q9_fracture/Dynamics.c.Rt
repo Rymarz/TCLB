@@ -49,6 +49,10 @@
     fMRT_incomp = MRT_eq(U, rho, u, order=2)
     fMRT_incomp$feq = incomp_feq(rho,u)
     fMRT_incomp$Req = incomp_feq(rho,u) %*% fMRT_incomp$mat
+
+# SRT concentration
+    c_eq  = PV(c(paste("c_eq[",1:9,"]",sep="")))
+    SC2 = PV("SC2")
 ?>
 
 CudaDeviceFunction real_t getRho(){
@@ -94,14 +98,14 @@ CudaDeviceFunction real_t getH(){
 CudaDeviceFunction real_t getC(){
     real_t C = <?R C(sum(c)) ?>;
 
-    // half of the source added
-    if (NodeType & NODE_Reaction) {
-        if(C < Saturation) {
-            real_t ReactionConstant_eff = ReactionConstant * Diffusivity * Sherwood / (Diffusivity * Sherwood + 2*ReactionConstant*h);
-            real_t Q = ReactionConstant_eff * (Saturation - C);
-            C += Q;  
-        }
-    }
+    // // half of the source added
+    // if (NodeType & NODE_Reaction) {
+    //     if(C < Saturation) {
+    //         real_t ReactionConstant_eff = ReactionConstant * Diffusivity * Sherwood / (Diffusivity * Sherwood + 2*ReactionConstant*h);
+    //         real_t Q = ReactionConstant_eff * (Saturation - C);
+    //         C += Q;  
+    //     }
+    // }
 
     return C;
 }
@@ -166,6 +170,21 @@ CudaDeviceFunction void Init() {
 }
 
 CudaDeviceFunction void Run() {
+    doBC();
+
+    switch (NodeType & NODE_COLLISION) {
+        case NODE_MRT:
+            CollisionMRT();
+        break;
+        case NODE_IncompressibleMRT:
+            CollisionIncompressibleMRT();
+        break;
+    }
+
+    ConcentrationCollisionSRT();
+}
+
+CudaDeviceFunction void doBC() {
     switch (NodeType & NODE_BOUNDARY) {
         case NODE_Solid:
         case NODE_Wall:
@@ -202,17 +221,6 @@ CudaDeviceFunction void Run() {
             EPressureEConcentration();
             break;
     }
-
-    switch (NodeType & NODE_COLLISION) {
-        case NODE_MRT:
-            CollisionMRT();
-        break;
-        case NODE_IncompressibleMRT:
-            CollisionIncompressibleMRT();
-        break;
-    }
-
-    ConcentrationCollisionMRT();
 }
 
 CudaDeviceFunction void BounceBack()
@@ -438,8 +446,8 @@ CudaDeviceFunction void ConcentrationCollisionMRT() {
     SC = PV("SC",1:nrow(CU)-1);
     SC[cMRT$order == 1] = PV("SC_odd")
     SC[cMRT$order == 2] = PV("SC2")
-    SC[cMRT$order == 3] = PV("SC3")
-    SC[cMRT$order == 4] = PV("SC4")
+    SC[cMRT$order == 3] = PV("SC_odd")
+    SC[cMRT$order == 4] = PV("SC2")
     C(RC, c %*% cMRT$mat);
     C(RC[selCR], (RC - cMRT$Req)[selCR]);
     C(RC[selCR], (RC * SC)[selCR]);
@@ -457,4 +465,15 @@ CudaDeviceFunction void ConcentrationCollisionMRT() {
     C(RC[selCR], (RC + cMRT$Req)[selCR]);
     C(c, RC %*% solve(cMRT$mat), float=F);
 ?>
+}
+
+CudaDeviceFunction void ConcentrationCollisionSRT() {
+    real_t C = <?R C(sum(c)) ?>;
+    real_t ux, uy;
+    ux =  f[8]-f[7]-f[6]+f[5]-f[3]+f[1];
+	uy = -f[8]-f[7]+f[6]+f[5]-f[4]+f[2]; 
+
+    real_t c_eq[9];
+    <?R C( c_eq, cMRT$feq) ?>
+    <?R C( c, c + (1 - SC2)*(c_eq - c)) ?>
 }
