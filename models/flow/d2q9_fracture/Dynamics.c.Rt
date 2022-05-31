@@ -55,6 +55,7 @@
     SC2 = PV("SC2")
 ?>
 
+// -- Macroscopic quantieties getters --
 CudaDeviceFunction real_t getRho(){
 	return <?R C(sum(f)) ?> ;
 }
@@ -79,7 +80,7 @@ CudaDeviceFunction vector_t getU(){
     u.x += GravitationX*0.5;
     u.y += GravitationY*0.5;
 
-    if (NodeType & NODE_Brinkman) {
+    if ((NodeType & NODE_OBJECTIVE) == NODE_Internal) {
         real_t nu = -(S2 + 1)/(6*S2 - 6);
         real_t K = 12. * nu / h / h;   
 
@@ -98,14 +99,14 @@ CudaDeviceFunction real_t getH(){
 CudaDeviceFunction real_t getC(){
     real_t C = <?R C(sum(c)) ?>;
 
-    // // half of the source added
-    // if (NodeType & NODE_Reaction) {
-    //     if(C < Saturation) {
-    //         real_t ReactionConstant_eff = ReactionConstant * Diffusivity * Sherwood / (Diffusivity * Sherwood + 2*ReactionConstant*h);
-    //         real_t Q = ReactionConstant_eff * (Saturation - C);
-    //         C += Q;  
-    //     }
-    // }
+    // half of the source added
+    if ((NodeType & NODE_OBJECTIVE) == NODE_Internal) {
+        if(C < Saturation) {
+            real_t ReactionConstant_eff = ReactionConstant * Diffusivity * Sherwood / (Diffusivity * Sherwood + 2*ReactionConstant*h);
+            real_t Q = ReactionConstant * (Saturation - C);
+            C += Q;  
+        }
+    }
 
     return C;
 }
@@ -122,6 +123,7 @@ CudaDeviceFunction float2 Color() {
         return ret;
 }
 
+// -- Initialisation and running simulation -- 
 CudaDeviceFunction void SetEquilibrum(real_t rho, real_t Jx, real_t Jy, real_t C, real_t ux, real_t uy) {
     switch (NodeType & NODE_COLLISION) {  
         case NODE_MRT:
@@ -171,17 +173,7 @@ CudaDeviceFunction void Init() {
 
 CudaDeviceFunction void Run() {
     doBC();
-
-    switch (NodeType & NODE_COLLISION) {
-        case NODE_MRT:
-            CollisionMRT();
-        break;
-        case NODE_IncompressibleMRT:
-            CollisionIncompressibleMRT();
-        break;
-    }
-
-    ConcentrationCollisionSRT();
+    doCollision();
 }
 
 CudaDeviceFunction void doBC() {
@@ -223,6 +215,20 @@ CudaDeviceFunction void doBC() {
     }
 }
 
+CudaDeviceFunction void doCollision() {
+    switch (NodeType & NODE_COLLISION) {
+        case NODE_MRT:
+            CollisionMRT();
+        break;
+        case NODE_IncompressibleMRT:
+            CollisionIncompressibleMRT();
+        break;
+    }
+
+    ConcentrationCollisionSRT();
+}
+
+// -- BCs --
 CudaDeviceFunction void BounceBack()
 {
 <?R
@@ -304,6 +310,7 @@ CudaDeviceFunction void EPressureEConcentration()
   c[6] = (1./36.) * C;
 }
 
+// -- Colision and streaming --
 CudaDeviceFunction void CollisionMRT()
 {
 <?R
@@ -355,7 +362,7 @@ CudaDeviceFunction void CollisionMRT()
     Jy = Jy + GravitationY*rho; 
 <?R } ?>
 
-    if (NodeType & NODE_Brinkman) {
+    if ((NodeType & NODE_OBJECTIVE) == NODE_Internal) {
         real_t nu = -(S2 + 1)/(6*S2 - 6);
         real_t K = 12. * nu / h / h;   
         Jx = Jx - K*Jx;
@@ -418,7 +425,7 @@ CudaDeviceFunction void CollisionIncompressibleMRT()
     uy = uy + GravitationY*rho; 
 <?R } ?>
 
-    if (NodeType & NODE_Brinkman) {
+    if ((NodeType & NODE_OBJECTIVE) == NODE_Internal) {
         real_t nu = -(S2 + 1)/(6*S2 - 6);
         real_t K = 12. * nu / h / h;   
         ux = ux - K*ux;
@@ -452,10 +459,10 @@ CudaDeviceFunction void ConcentrationCollisionMRT() {
     C(RC[selCR], (RC - cMRT$Req)[selCR]);
     C(RC[selCR], (RC * SC)[selCR]);
 ?>
-    if (NodeType & NODE_Reaction) {
+    if ((NodeType & NODE_OBJECTIVE) == NODE_Internal) {
         if(C < Saturation) {
             real_t ReactionConstant_eff = ReactionConstant * Diffusivity * Sherwood / (Diffusivity * Sherwood + 2*ReactionConstant*h);
-            real_t Q = ReactionConstant_eff * (Saturation - C);
+            real_t Q = ReactionConstant * (Saturation - C);
             C = C + 2*Q;  
         } else {
             C = Saturation;
@@ -476,4 +483,30 @@ CudaDeviceFunction void ConcentrationCollisionSRT() {
     real_t c_eq[9];
     <?R C( c_eq, cMRT$feq) ?>
     <?R C( c, c + (1 - SC2)*(c_eq - c)) ?>
+
+    if ((NodeType & NODE_OBJECTIVE) == NODE_Internal) {
+        if(C < Saturation) {
+            real_t ReactionConstant_eff = ReactionConstant * Diffusivity * Sherwood / (Diffusivity * Sherwood + 2*ReactionConstant*h);
+            real_t Q = ReactionConstant * (Saturation - C);
+            c[0] += 2*Q * 4./9.;
+            c[1] += 2*Q * 1./9;
+            c[2] += 2*Q * 1./9.;
+            c[3] += 2*Q * 1./9.;
+            c[4] += 2*Q * 1./9.;
+            c[5] += 2*Q * 1./36.;
+            c[6] += 2*Q * 1./36.;
+            c[7] += 2*Q * 1./36.;
+            c[8] += 2*Q * 1./36.;
+        } else {
+            c[0] = Saturation * 4./9.;
+            c[1] = Saturation * 1./9;
+            c[2] = Saturation * 1./9.;
+            c[3] = Saturation * 1./9.;
+            c[4] = Saturation * 1./9.;
+            c[5] = Saturation * 1./36.;
+            c[6] = Saturation * 1./36.;
+            c[7] = Saturation * 1./36.;
+            c[8] = Saturation * 1./36.;
+        }
+    }
 }

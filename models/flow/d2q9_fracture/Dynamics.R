@@ -110,5 +110,5 @@ AddNodeType(name = "Wall", group = "BOUNDARY")
 AddNodeType(name = "MRT", group = "COLLISION")
 AddNodeType(name = "IncompressibleMRT", group = "COLLISION")
 
-AddNodeType(name = "Brinkman", group = "OBJECTIVE")
-AddNodeType(name = "Reaction", group = "OBJECTIVE")
+#
+AddNodeType(name = "Internal", group = "OBJECTIVE")
