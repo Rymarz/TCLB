@@ -171,6 +171,10 @@ CudaDeviceFunction void Init() {
     h = Height;
 }
 
+CudaDeviceFunction void InitFromFields() {
+  h = Height_parameter;
+}
+
 CudaDeviceFunction void Run() {
     doBC();
     doCollision();
@@ -461,7 +465,7 @@ CudaDeviceFunction void ConcentrationCollisionMRT() {
 ?>
     if ((NodeType & NODE_OBJECTIVE) == NODE_Internal) {
         if(C < Saturation) {
-            real_t ReactionConstant_eff = ReactionConstant * Diffusivity * Sherwood / (Diffusivity * Sherwood + 2*ReactionConstant*h);
+            // real_t ReactionConstant_eff = ReactionConstant * Diffusivity * Sherwood / (Diffusivity * Sherwood + 2*ReactionConstant*h);
             real_t Q = ReactionConstant * (Saturation - C);
             C = C + 2*Q;  
         } else {

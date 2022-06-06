@@ -50,6 +50,13 @@ AddQuantity(name = "U", unit = "m/s", vector = T)
 AddQuantity(name = "H", unit = "m")
 AddQuantity(name = "C", unit = "kg/m3")
 
+# Stages
+AddDensity(name = "Height_parameter", group = "init", parameter = TRUE)
+AddStage(name = "BaseIteration", main = "Run", load.densities = TRUE, save.fields = TRUE)
+AddStage(name = "BaseInitFromFields", main = "InitFromFields", load.densities = TRUE, save.fields = TRUE)
+AddAction(name = "Iteration", "BaseIteration")
+AddAction(name = "InitFromFields", "BaseInitFromFields")
+
 # Settings - table of settings (constants) that are taken from a .xml file
 #  name - name of the constant variable
 #  comment - additional comment
