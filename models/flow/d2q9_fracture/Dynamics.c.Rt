@@ -324,11 +324,13 @@ CudaDeviceFunction void CollisionMRT()
 ?>
 	real_t <?R C(R,sep=",") ?>;
     real_t Usq=0;
+    real_t omega_odd = 2.*(1.+S2)/((1.-S2)*(4.*MagicNumber-1.)+2.);
+    real_t S_odd = 1. - omega_odd;
 <?R
     S=PV("S",1:nrow(U)-1);
 	S[fMRT$order == 2] = PV("S2")
-	S[fMRT$order == 3] = PV("S3")
- 	S[fMRT$order == 4] = PV("S4")   
+	S[fMRT$order == 3] = PV("S_odd")
+ 	S[fMRT$order == 4] = PV("S2")   
 	C( R, f %*% fMRT$mat );
 ?>
 

@@ -73,6 +73,7 @@ AddSetting(name = "GravitationY", default = 0, comment = "body/external accelera
 AddSetting(name = "S2", default = "0", comment = "MRT Sx")
 AddSetting(name = "S3", default = "0", comment = "MRT Sx")
 AddSetting(name = "S4", default = "0", comment = "MRT Sx")
+AddSetting(name = "MagicNumber", default = 0.25, comment = "TRT magic number")
 
 AddSetting(name = "Height", default = 1, zonal = TRUE)
 
