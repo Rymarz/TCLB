@@ -175,6 +175,12 @@ CudaDeviceFunction void InitFromFields() {
   h = Height_parameter;
 }
 
+CudaDeviceFunction void hEvolution() {
+    real_t C = <?R C(sum(c)) ?>;
+    real_t Q = ReactionConstant * (Saturation - C);
+    h += hTimeStep*2*Q/SolidConcentration;
+}
+
 CudaDeviceFunction void Run() {
     doBC();
     doCollision();
@@ -503,7 +509,7 @@ CudaDeviceFunction void ConcentrationCollisionSRT() {
             c[6] += 2*Q * 1./36.;
             c[7] += 2*Q * 1./36.;
             c[8] += 2*Q * 1./36.;
-            h += 2*Q/SolidConcentration;
+            // h += 2*Q/SolidConcentration;
         } else {
             c[0] = Saturation * 4./9.;
             c[1] = Saturation * 1./9;

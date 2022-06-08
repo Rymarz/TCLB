@@ -54,8 +54,10 @@ AddQuantity(name = "C", unit = "kg/m3")
 AddDensity(name = "Height_parameter", group = "init", parameter = TRUE)
 AddStage(name = "BaseIteration", main = "Run", load.densities = TRUE, save.fields = TRUE)
 AddStage(name = "BaseInitFromFields", main = "InitFromFields", load.densities = TRUE, save.fields = TRUE)
+AddStage(name = "BasehEvolution", main = "hEvolution", load.densities = TRUE, save.fields = TRUE)
 AddAction(name = "Iteration", "BaseIteration")
 AddAction(name = "InitFromFields", "BaseInitFromFields")
+AddAction(name = "hEvolution", "BasehEvolution")
 
 # Settings - table of settings (constants) that are taken from a .xml file
 #  name - name of the constant variable
@@ -84,6 +86,7 @@ AddSetting(name = "Saturation", default = 1, comment = "Saturation concentration
 AddSetting(name = "ReactionConstant", default = 1, comment = "Reaction speed coefficient")
 AddSetting(name = "SolidConcentration", default = 1, comment = "Solid concentration")
 AddSetting(name = "Sherwood", default = 8, comment = "Sherwood number")
+AddSetting(name = "hTimeStep", default = 1, comment = "h evolution time step in pseudo-steady state approach")
 
 
 AddSetting(name = "SC2", default = "0", comment = "MRT concentration SCx")
