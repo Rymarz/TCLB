@@ -44,9 +44,9 @@ if (Options$bc) {
 # If one have filed [something] with type [type], one have to define a function:
 # [type] get[something]() { return ...; }
 
-AddQuantity(name = "Rho", unit = "kg/m3")
-AddQuantity(name = "P", unit = "Pa")
-AddQuantity(name = "U", unit = "m/s", vector = T)
+AddQuantity(name = "Rho", unit = "kg/m2")
+AddQuantity(name = "P", unit = "Pam")
+AddQuantity(name = "Q", unit = "m2/s", vector = T)
 AddQuantity(name = "H", unit = "m")
 AddQuantity(name = "C", unit = "kg/m3")
 
