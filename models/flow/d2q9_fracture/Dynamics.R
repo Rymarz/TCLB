@@ -79,8 +79,9 @@ AddSetting(name = "MagicNumber", default = 0.25, comment = "TRT magic number")
 
 AddSetting(name = "Height", default = 1, zonal = TRUE)
 
-AddSetting(name = "ConcentrationRelaxationRate", SC2 = "1-ConcentrationRelaxationRate", default = 0, comment = "one over concentration relaxation time")
-AddSetting(name = "Diffusivity", ConcentrationRelaxationRate = "1.0/(3*Diffusivity+0.5)", default = 0.166666667, comment = "diffusivity")
+# AddSetting(name = "ConcentrationRelaxationRate", SC2 = "1-ConcentrationRelaxationRate", default = 0, comment = "one over concentration relaxation time")
+# AddSetting(name = "Diffusivity", ConcentrationRelaxationRate = "1.0/(3*Diffusivity+0.5)", default = 0.166666667, comment = "diffusivity")
+AddSetting(name = "Diffusivity", default = 0.166666667, comment = "diffusivity")
 AddSetting(name = "Concentration", default = 0, comment = "inlet/outlet/init concentration", zonal = T)
 AddSetting(name = "Saturation", default = 1, comment = "Saturation concentration")
 AddSetting(name = "ReactionConstant", default = 1, comment = "Reaction speed coefficient")
@@ -119,7 +120,5 @@ AddNodeType(name = "Outlet", group = "OBJECTIVE")
 AddNodeType(name = "Solid", group = "BOUNDARY")
 AddNodeType(name = "Wall", group = "BOUNDARY")
 AddNodeType(name = "MRT", group = "COLLISION")
-AddNodeType(name = "IncompressibleMRT", group = "COLLISION")
 
-#
 AddNodeType(name = "Internal", group = "OBJECTIVE")

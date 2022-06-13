@@ -23,36 +23,12 @@
     CU = as.matrix(Density[Density$group=='c',c("dx","dy")])
 
 # Creating objects which store all MRT needed information
-    # fMRT = MRT_eq(U, ortogonal=FALSE)
-    # wi = subst(fMRT$Req, Jx=0, Jy=0, Jz=0)
-    # wi = subst(wi, rho=1)
-    # wi = gapply(wi,function(x) x$.M, simplify=TRUE)
-    # wi = wi %*% solve(fMRT$mat)
-	# wi = as.vector(wi)
-
-	# W = solve(fMRT$mat) %*% diag(1/wi) %*% solve(t(fMRT$mat))
-	# i = rev(1:nrow(W))
-	# H = chol(W[i,i])[i,i]
-	# H = H * c(1,sqrt(3)/3,sqrt(3)/3,sqrt(2),sqrt(2),1,sqrt(6)/3,sqrt(6)/3,2)
-	# B = fMRT$mat %*% t(H)
-	# fMRT = MRT_eq(U, mat=B)
-
 	fMRT = MRT_eq(U, rho, J, order=2)
     cMRT = MRT_eq(CU, C, C*q, order=2)
 
-    # incomp_feq returns incompressible equilibrium distribution
-    incomp_feq = function( d, q ) {
-        weights = c(4./9., 1./9., 1./9., 1./9., 1./9., 1./36., 1./36., 1./36., 1./36.)
-        c_sq = 1/3.
-        weights*((q %*% t(U))*( 1/ c_sq) + ((q %*% t(U)) * (q %*% t(U)))*(1/(c_sq*c_sq*2)) - sum(q*q)*(1/(c_sq*2)) + d)
-    }
-    fMRT_incomp = MRT_eq(U, rho, q, order=2)
-    fMRT_incomp$feq = incomp_feq(rho,q)
-    fMRT_incomp$Req = incomp_feq(rho,q) %*% fMRT_incomp$mat
-
 # SRT concentration
     c_eq  = PV(c(paste("c_eq[",1:9,"]",sep="")))
-    SC2 = PV("SC2")
+    ConcentrationRelaxationRate = PV("ConcentrationRelaxationRate")
 ?>
 
 // -- Macroscopic quantieties getters --
@@ -68,8 +44,7 @@ CudaDeviceFunction vector_t getU(){
 	real_t rho = <?R C(sum(f)) ?>;
 	vector_t q;
 <?R C(PV(c("q.x","q.y")), f %*% U) ?>
-    q.x /= rho;
-	q.y /= rho;
+
 <?R if ( Options$bc ) { ?>
     if (!IamBOUNDARY) {   
         q.x += BC[0]*0.5;
@@ -77,20 +52,19 @@ CudaDeviceFunction vector_t getU(){
     }
 <?R } ?>
     // half of the source added
-    q.x += rho*GravitationX*0.5;
-    q.y += rho*GravitationY*0.5;
+    q.x += rho*h*GravitationX*0.5;
+    q.y += rho*h*GravitationY*0.5;
 
     if ((NodeType & NODE_OBJECTIVE) == NODE_Internal) {
         real_t nu = -(S2 + 1)/(6*S2 - 6);
         real_t h2_inv = 1/(h*h);
-        real_t K = rho * 12. * nu * h2_inv;  
-        q.x = (q.x)/(1. + 0.5 * K) / rho;
-        q.y = (q.y)/(1. + 0.5 * K) / rho; 
+        real_t K = 12. * nu * h2_inv;  
+        q.x = (q.x)/(1. + 0.5 * K);
+        q.y = (q.y)/(1. + 0.5 * K); 
     }
-     
-    // q.x /= h;
-	// q.y /= h; 
-    q.z = 0.0;
+
+    q.x /= rho;
+    q.y /= rho;
 	return q;
 }
 
@@ -130,9 +104,6 @@ CudaDeviceFunction void SetEquilibrum(real_t rho, real_t Jx, real_t Jy, real_t C
     switch (NodeType & NODE_COLLISION) {  
         case NODE_MRT:
             <?R C( f, fMRT$feq) ?>
-		break;
-    case NODE_IncompressibleMRT:
-            <?R C( f, fMRT_incomp$feq) ?>
 		break;
     }  
 <?R
@@ -368,20 +339,20 @@ CudaDeviceFunction void CollisionMRT()
 
 <?R if ( Options$bc ) { ?>
     if (!IamBOUNDARY) {
-        Jx = Jx + (GravitationX +  BC[0])*rho ;
-        Jy = Jy + (GravitationY +  BC[1])*rho ; 
+        Jx = Jx + h*(GravitationX + BC[0])*rho ;
+        Jy = Jy + h*(GravitationY + BC[1])*rho ; 
     }
 <?R } else { ?>
-    real_t dJx =  h*GravitationX*rho ;
-    real_t dJy =  h*GravitationY*rho ; 
+    real_t dJx = h*GravitationX*rho ;
+    real_t dJy = h*GravitationY*rho ; 
 <?R } ?>
 
     if ((NodeType & NODE_OBJECTIVE) == NODE_Internal) {
         real_t nu = -(S2 + 1)/(6*S2 - 6);
         real_t h2_inv = 1/(h*h);
-        real_t K = rho * 12. * nu * h2_inv;  
-        Jx = Jx + dJx - K*(Jx+dJx*0.5)/(1. + 0.5 * K) / rho;
-        Jy = Jy + dJy - K*(Jy+dJy*0.5)/(1. + 0.5 * K) / rho;    
+        real_t K = 12. * nu * h2_inv;  
+        Jx = Jx + dJx - K*(Jx+dJx*0.5)/(1. + 0.5 * K)/rho;
+        Jy = Jy + dJy - K*(Jy+dJy*0.5)/(1. + 0.5 * K)/rho;;    
     } else {
         Jx += dJx;
         Jy += dJy;
@@ -394,13 +365,15 @@ CudaDeviceFunction void CollisionMRT()
 
 CudaDeviceFunction void ConcentrationCollisionSRT() {
     real_t C = <?R C(sum(c)) ?>;
+    real_t rho = <?R C(sum(f)) ?>;
     real_t qx, qy;
-    qx =  f[8]-f[7]-f[6]+f[5]-f[3]+f[1];
-	qy = -f[8]-f[7]+f[6]+f[5]-f[4]+f[2]; 
+    qx = (f[8]-f[7]-f[6]+f[5]-f[3]+f[1])/rho;
+	qy = (-f[8]-f[7]+f[6]+f[5]-f[4]+f[2])/rho; 
 
     real_t c_eq[9];
     <?R C( c_eq, cMRT$feq) ?>
-    <?R C( c, c + (1 - SC2)*(c_eq - c)) ?>
+    real_t ConcentrationRelaxationRate = 1.0/(3*h*Diffusivity+0.5);
+    <?R C( c, c + ConcentrationRelaxationRate*(c_eq - c)) ?>
 
     if ((NodeType & NODE_OBJECTIVE) == NODE_Internal) {
         if(C < Saturation) {
