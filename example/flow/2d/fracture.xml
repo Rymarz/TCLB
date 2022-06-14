@@ -1,73 +1,109 @@
 <?xml version="1.0"?>
-<CLBConfig version="2.0" output="output/Pe=100_Da=5e-2_lam=2e-4" permissive="true">
-  <!-- C = physical_value / gauge -->
-  <Units>
-    <Param name="Viscosity" value="1e-6m2/s" gauge="1" />
-    <Param name="C_l" value="0.02m" gauge="1" />
-    <Param name="rho" value="1000kg/m3" gauge="1"/>
-	</Units>
-  <Geometry nx="1024" ny="128">
-    <IncompressibleSRT>
-      <Box />
-    </IncompressibleSRT>
-    <WPressureWConcentration name="Inlet">
-      <Inlet />
-    </WPressureWConcentration>
-    <EPressureEConcentration name="Outlet">
-      <Outlet />
-    </EPressureEConcentration>
-    <Inlet nx="1" dx="1">
-      <Box />
-    </Inlet>
-    <Outlet nx="1" dx="-1">
-      <Box />
-    </Outlet>
-  </Geometry>
+<CLBConfig version="2.0" output="output/Pe=100_Da=5e-4_lam=1e-5_20mx10m" permissive="true">
+    <!-- C = physical_value / gauge -->
+    <Units>
+        <Param name="Viscosity" value="1e-6m2/s" gauge="1e-5" />
+        <Param value="0.01m" gauge="1" />
+        <Param value="1000kg/m3" gauge="1" />
+    </Units>
+    <Geometry nx="1.02m" ny="8">
+        <MRT>
+            <Box />
+        </MRT>
+        <!-- <IncompressibleMRT>
+            <Box />
+        </IncompressibleMRT> -->
+        <!-- <WPressure name="Inlet">
+            <Inlet />
+        </WPressure>
+        <EPressure name="Outlet">
+            <Outlet />
+        </EPressure> -->
+        <WPressureWConcentration name="Inlet">
+            <Box nx="1" />
+        </WPressureWConcentration>
+        <EPressureEConcentration name="Outlet">
+            <Box dx="-1" />
+        </EPressureEConcentration>
+        <!-- <None name="InletZone">
+            <Box dx="2" fx="30" />
+        </None>
+        <None name="OutletZone">
+            <Box dx="-30" fx="-2" />
+        </None> -->
+        <Internal>
+            <Box dx="1" fx="-1"/>
+        </Internal>
+        <!-- <Wall mask="ALL" name="BottomWall">
+			<Box ny="1"/>
+		</Wall>
+		<Wall mask="ALL" name="TopWall">
+			<Box dy="-1"/>
+		</Wall> -->
+    </Geometry>
 
-  <!-- Pe = q_0/D = 100       -->
-  <!-- Da = kh_0 / q_0 = 5e-2 -->
-  <!-- Lambda = h_0 / L = 1e-5 -->
-  <!-- Dimensionless -->
-  <Model>
-    <Param name="Pressure" value=".1" zone="Inlet" />
-    <Param name="Pressure" value="-.1" zone="Outlet" />
-    <Param name="Saturation" value="3/m3" />
-    <Param name="Concentration" value="3/m3" />
-    <Param name="k" value="0" />
-    <Param name="SolidConcentration" value="2.7e4/m3" />
-    <Param name="Height" value="0.2048" />
-    <Param name="Diffusivity" value="1" />
-    <Param name="MagicNumber_D" value="0.25" />
-  </Model>
+    <!-- Pe = q_0/D = 100       -->
+    <!-- Da = kh_0 / q_0 = 5e-4 -->
+    <!-- Lambda = h_0 / L = 1e-5 -->
+    <!-- 31536000s = 1 year -->
 
-  <!-- Dimensioned -->
-  <!-- <Param name="VelocityX" value="5e-4m/s"/> -->
-  <!-- 98.1Pa for each meter  -->
-  <!-- <Model>    
-    <Param name="Pressure" value="0.01" zone="Inlet"/>
-    <Param name="Pressure" value="0" zone="Outlet"/>
-    <Param name="Saturation" value="3.0/m3" />
-    <Param name="Concentration" value="3.0/m3" />
-    <Param name="k" value="0" /> 
-    <Param name="SolidConcentration" value="2.7e4/m3" />
-    <Param name="Height" value="2e-4m" />
-    <Param name="Diffusivity" value="6.73e-10m2/s" />
-    <Param name="MagicNumber_D" value="0.25" />
-  </Model> -->
-  <RunR>
-    <!-- Solver$Fields$Height_parameter[] = rnorm(100*16, mean = 0.2048, sd=0.0002);
-    Solver$Actions$InitFromFields(); -->
-  </RunR>
 
-  <HDF5 />
+    <Model>
+        <!-- <Param name="GravitationX" value="0.0981m/s2"/> -->
+        <Param name="Pressure" value="0.015Pam" zone="Inlet" />
+        <Param name="Pressure" value="-0.015Pam" zone="Outlet" />
+        <Param name="Saturation" value="0.2kg/m3" />
+        <Param name="Concentration" value="0.2kg/m3" />
+        <Param name="Concentration" value="0.001kg/m3" zone="Inlet" />
+        <Param name="Concentration" value="0.2kg/m3" zone="Outlet" />
+        <!-- <Param name="ReactionConstant" value="0" /> -->
+        <!-- <Param name="ReactionConstant" value="2.5e-3/s" /> -->
+        <Param name="ReactionConstant" value="2.5e-7m/s" />
+        <Param name="SolidConcentration" value="2702.322kg/m3" />
+        <Param name="Height" value="2e-4m" />
+        <Param name="Diffusivity" value="1e-9m2/s" />
+        <Param name="Diffusivity_h" value="1e-9m2/s" />
+        <Param name="MagicNumber_D" value="0.25" />
+    </Model>
+    <RunR>
+        x = Solver$Geometry$X 
+        y = Solver$Geometry$Y 
+        Solver$Fields$Height_parameter[] = 0.02 + 0.002*sin(10*x+10*y)
+ 
+        Solver$Actions$InitFromFields()
+    </RunR>
+    <!-- <HDF5/>
+    <Solve Iterations="100000">
+        <HDF5 Iterations="10000" />
 
-  <Solve Iterations="100"></Solve>
 
-  <Param name="k" value="2.44140625E-04" />
-  <Param name="Concentration" value="1/m3" zone="Inlet" />
+    </Solve> -->
+            <!-- <Sample Iterations="1000" what="U">
+            <Point dx="0.5m" dy="0.05m" />
+        </Sample> -->
+    <!-- 50 years of dissolution -->
+    <!-- 5 years HDF5 -->
+    <!-- <HDF5/> -->
+    <Solve Iterations="10000000">
+        <HDF5 Iterations="1000000"/>
+    </Solve>
+    <!-- <Repeat Times="100">
+        <Param name="hTimeStep" value="31536s" />
+        <RunAction name="hEvolution" Iterations="1" />
+        <Solve Iterations="1000000"/>
+        <HDF5/>
+    </Repeat> -->
 
-  <Solve Iterations="100">
-    <HDF5 Iterations="10" />
-  </Solve>
-
+    <!-- <Repeat Times="10">
+        <Repeat Times="5">
+            <Repeat Times="10">
+                <Param name="hTimeStep" value="3153600s" />
+                <RunAction name="hEvolution" Iterations="1" />
+                <Solve Iterations="1000000">
+                    <Stop PressureLossChange="1e-3" Times="5" Iterations="10000" />
+                </Solve>
+            </Repeat>
+        </Repeat>
+        <HDF5 />
+    </Repeat> -->
 </CLBConfig>
