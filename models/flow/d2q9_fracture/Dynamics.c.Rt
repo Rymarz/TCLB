@@ -58,9 +58,9 @@ CudaDeviceFunction vector_t getQ(){
     if ((NodeType & NODE_OBJECTIVE) == NODE_Internal) {
         real_t nu = -(S2 + 1)/(6*S2 - 6);
         real_t h2_inv = 1/(h*h);
-        real_t K = 12. * nu * h2_inv;  
-        q.x = (q.x)/(1. + 0.5 * K);
-        q.y = (q.y)/(1. + 0.5 * K); 
+        real_t K = 12. * rho* nu * h2_inv;  
+        q.x = (q.x)/(1. + 0.5*K);
+        q.y = (q.y)/(1. + 0.5*K); 
     }
 
     q.x /= rho;
@@ -78,8 +78,8 @@ CudaDeviceFunction real_t getC(){
     // half of the source added
     if ((NodeType & NODE_OBJECTIVE) == NODE_Internal) {
         if(C < Saturation) {
-            // real_t ReactionConstant_eff = ReactionConstant * Diffusivity * Sherwood / (Diffusivity * Sherwood + 2*ReactionConstant*h);
-            real_t Q = ReactionConstant * (Saturation - C);
+            real_t ReactionConstant_eff = ReactionConstant * Diffusivity * Sherwood / (Diffusivity * Sherwood + 2*ReactionConstant*h);
+            real_t Q = ReactionConstant_eff * (Saturation - C);
             C += Q;  
         }
     }
@@ -350,9 +350,9 @@ CudaDeviceFunction void CollisionMRT()
     if ((NodeType & NODE_OBJECTIVE) == NODE_Internal) {
         real_t nu = -(S2 + 1)/(6*S2 - 6);
         real_t h2_inv = 1/(h*h);
-        real_t K = 12. * nu * h2_inv;  
-        Jx = Jx + dJx - K*(Jx+dJx*0.5)/(1. + 0.5 * K)/rho;
-        Jy = Jy + dJy - K*(Jy+dJy*0.5)/(1. + 0.5 * K)/rho;;    
+        real_t K = 12. *rho* nu * h2_inv;  
+        Jx = Jx + dJx - K*Jx/rho/(1. + 0.5*K);
+        Jy = Jy + dJy - K*Jy/rho/(1. + 0.5*K);    
     } else {
         Jx += dJx;
         Jy += dJy;
@@ -373,12 +373,13 @@ CudaDeviceFunction void ConcentrationCollisionSRT() {
     real_t c_eq[9];
     <?R C( c_eq, cMRT$feq) ?>
     real_t ConcentrationRelaxationRate = 1.0/(3*h*Diffusivity+0.5);
+    // real_t ConcentrationRelaxationRate = 1.0/(3*Diffusivity+0.5);
     <?R C( c, c + ConcentrationRelaxationRate*(c_eq - c)) ?>
 
     if ((NodeType & NODE_OBJECTIVE) == NODE_Internal) {
         if(C < Saturation) {
-            // real_t ReactionConstant_eff = ReactionConstant * Diffusivity * Sherwood / (Diffusivity * Sherwood + 2*ReactionConstant*h);
-            real_t Q = ReactionConstant * (Saturation - C);
+            real_t ReactionConstant_eff = ReactionConstant * Diffusivity * Sherwood / (Diffusivity * Sherwood + 2*ReactionConstant*h);
+            real_t Q = ReactionConstant_eff * (Saturation - C);
             c[0] += 2*Q * 4./9.;
             c[1] += 2*Q * 1./9;
             c[2] += 2*Q * 1./9.;
