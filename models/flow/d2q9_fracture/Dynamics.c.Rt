@@ -33,7 +33,7 @@
 
 // -- Macroscopic quantieties getters --
 CudaDeviceFunction real_t getRho(){
-	return <?R C(sum(f)) ?> ;
+	return <?R C(sum(f)) ?>;
 }
 
 CudaDeviceFunction real_t getP(){
@@ -78,8 +78,8 @@ CudaDeviceFunction real_t getC(){
     // half of the source added
     if ((NodeType & NODE_OBJECTIVE) == NODE_Internal) {
         if(C < Saturation) {
-            real_t ReactionConstant_eff = ReactionConstant * Diffusivity * Sherwood / (Diffusivity * Sherwood + 2*ReactionConstant*h);
-            real_t Q = ReactionConstant_eff * (Saturation - C);
+            // real_t ReactionConstant_eff = ReactionConstant * Diffusivity * Sherwood / (Diffusivity * Sherwood + 2*ReactionConstant*h);
+            real_t Q = ReactionConstant * (Saturation - C);
             C += Q;  
         }
     }
@@ -195,6 +195,12 @@ CudaDeviceFunction void doBC() {
         case NODE_EPressureEConcentration:
             EPressureEConcentration();
             break;
+        case NODE_WVelocityWConcentration:
+            WVelocityWConcentration();
+            break;
+        case NODE_EVelocityEConcentration:
+            EVelocityEConcentration();
+            break;
     }
 }
 
@@ -293,6 +299,30 @@ CudaDeviceFunction void EPressureEConcentration()
   c[6] = (1./36.) * C;
 }
 
+CudaDeviceFunction void WVelocityWConcentration()
+{
+<?R ZouHeRewrite(fMRT, f, c(-1, 0), "velocity", BC_Velocity) ?>
+//d2q5
+// c[1] = Concentration - c[0] - c[2] - c[3] - c[4];
+//d2q9
+  real_t C = 6.*( Concentration - (c[0] + c[2] + c[4] + c[3] + c[7] + c[6]) );
+  c[1] = (1./9.) * C;
+  c[5] = (1./36.) * C;
+  c[8] = (1./36.) * C;
+}
+
+CudaDeviceFunction void EVelocityEConcentration()
+{
+<?R ZouHeRewrite(fMRT, f, c(1, 0), "velocity", BC_Velocity) ?>
+//d2q5
+// c[3] = Concentration - c[0] - c[1] - c[2] - c[4];
+//d2q9
+  real_t C = 6.*( Concentration - ( c[0] + c[2] + c[4] + c[1] + c[5] + c[8] ) );
+  c[3] = (1./ 9.) * C;
+  c[7] = (1./36.) * C;
+  c[6] = (1./36.) * C;
+}
+
 // -- Colision and streaming --
 CudaDeviceFunction void CollisionMRT()
 {
@@ -378,8 +408,8 @@ CudaDeviceFunction void ConcentrationCollisionSRT() {
 
     if ((NodeType & NODE_OBJECTIVE) == NODE_Internal) {
         if(C < Saturation) {
-            real_t ReactionConstant_eff = ReactionConstant * Diffusivity * Sherwood / (Diffusivity * Sherwood + 2*ReactionConstant*h);
-            real_t Q = ReactionConstant_eff * (Saturation - C);
+            // real_t ReactionConstant_eff = ReactionConstant * Diffusivity * Sherwood / (Diffusivity * Sherwood + 2*ReactionConstant*h);
+            real_t Q = ReactionConstant * (Saturation - C);
             c[0] += 2*Q * 4./9.;
             c[1] += 2*Q * 1./9;
             c[2] += 2*Q * 1./9.;

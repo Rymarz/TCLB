@@ -114,6 +114,8 @@ AddNodeType(name = "SSymmetry", group = "BOUNDARY")
 
 AddNodeType(name = "WPressureWConcentration", group = "BOUNDARY")
 AddNodeType(name = "EPressureEConcentration", group = "BOUNDARY")
+AddNodeType(name = "WVelocityWConcentration", group = "BOUNDARY")
+AddNodeType(name = "EVelocityEConcentration", group = "BOUNDARY")
 
 AddNodeType(name = "Inlet", group = "OBJECTIVE")
 AddNodeType(name = "Outlet", group = "OBJECTIVE")
