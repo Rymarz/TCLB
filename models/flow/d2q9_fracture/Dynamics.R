@@ -52,6 +52,7 @@ AddQuantity(name = "C", unit = "kg/m3")
 
 # Stages
 AddDensity(name = "Height_parameter", group = "init", parameter = TRUE)
+AddDensity(name = "Concentration_param", group = "init", parameter = TRUE)
 AddStage(name = "BaseIteration", main = "Run", load.densities = TRUE, save.fields = TRUE)
 AddStage(name = "BaseInitFromFields", main = "InitFromFields", load.densities = TRUE, save.fields = TRUE)
 AddStage(name = "BasehEvolution", main = "hEvolution", load.densities = TRUE, save.fields = TRUE)
@@ -82,6 +83,7 @@ AddSetting(name = "Height", default = 1, zonal = TRUE)
 # AddSetting(name = "ConcentrationRelaxationRate", SC2 = "1-ConcentrationRelaxationRate", default = 0, comment = "one over concentration relaxation time")
 # AddSetting(name = "Diffusivity", ConcentrationRelaxationRate = "1.0/(3*Diffusivity+0.5)", default = 0.166666667, comment = "diffusivity")
 AddSetting(name = "Diffusivity", default = 0.166666667, comment = "diffusivity")
+
 AddSetting(name = "Concentration", default = 0, comment = "inlet/outlet/init concentration", zonal = T)
 AddSetting(name = "Saturation", default = 1, comment = "Saturation concentration")
 AddSetting(name = "ReactionConstant", default = 1, comment = "Reaction speed coefficient")
